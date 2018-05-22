@@ -16,7 +16,7 @@ public class SpaceSimulation {
     // number of simulations run
     private static final int NOF_RUNS = 100;
     // number of days for one simulation
-    private static final int MAX_TIME = 1000;
+    private static final int MAX_TIME = 100;
     /** chance that one particle hits one specific satellite in one year */
     private static final double probDebrisCollision = 0;
     /** average period for debris to fall into the atmosphere or outer space in days */
@@ -24,9 +24,9 @@ public class SpaceSimulation {
     /** average period for debris to fall into the atmosphere or outer space in days */
     private static final double fallProbDebrisLarge = 0;
     /** the number of particles a satellite creates when colliding */
-    private static final int shreddingFactor = 1000;
+    private static final int shreddingFactor = 0;
     /** max satellite launches per day */
-    private static final double launchesPerDay = 10.0 / 356;
+    private static final double launchesPerDay = 1 / 356.0;
     /** number of satellites that we want in the sky */
     private static final int satellitesRequiredInOrbit = 0;
 
@@ -72,7 +72,7 @@ public class SpaceSimulation {
             // could have been an if-statement, but this is more stable
             while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
                 satellitesInOrbit++;
-                daysUntilNextLaunch += 1 / launchesPerDay; // may be a distribution?
+                daysUntilNextLaunch += (1.0 / launchesPerDay); // may be a distribution?
             }
 
             particlesTotal.add(particlesSmall + particlesLarge);
