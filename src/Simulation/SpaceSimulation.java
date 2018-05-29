@@ -29,9 +29,13 @@ public class SpaceSimulation extends Thread {
     public static final double launchesPerDay = 1 / 356.0;
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 0;
+    /** number of satellites that an observatory can resolve within one day */
+    private static final int observatoryCapacity = 3;
+    /** observatory effectivity to save a sat from a SMALL particle */
+    private static final double observatoryEffectivity = 0.9;
 
     // note that every simulation is a new SpaceSimulation object
-    /** particles smaller than a whole satellite */
+    /** particles smaller than a whole satellite, large enough to destroy a satellite */
     private long particlesSmall = 0;
     /** non-functional satellites still in orbit */
     private int particlesLarge = 0;
@@ -59,21 +63,7 @@ public class SpaceSimulation extends Thread {
         if (completion.getCount() != 1) throw new IllegalStateException("Simulation can only be run once!");
 
         for (int i = 0; i < MAX_TIME; i++) {
-            simulateCollisions();
-
-            // particles falling back into the atmosphere
-            int fallenLarge = new GeometricDistribution(fallProbDebrisLarge).nextInt();
-            particlesLarge -= fallenLarge;
-            int fallenSmall = new GeometricDistribution(fallProbDebrisSmall).nextInt();
-            particlesSmall -= fallenSmall;
-
-            // launching new satellites
-            daysUntilNextLaunch = Math.max(0, daysUntilNextLaunch - 1);
-            // could have been an if-statement, but this is more stable
-            while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
-                satellitesInOrbit++;
-                daysUntilNextLaunch += (1.0 / launchesPerDay); // may be a distribution?
-            }
+            progressOneDay();
 
             results.addResults(particlesSmall, particlesLarge, satellitesInOrbit);
         }
@@ -81,28 +71,61 @@ public class SpaceSimulation extends Thread {
         completion.countDown();
     }
 
-    /** calculates the effect of collisions, and changes the state of the run with */
-    private void simulateCollisions() {
-        // large debris collision with satellite
+    /** updates and calculates the changes for one day */
+    private void progressOneDay() {
+        // different types of collisions
         int largeWithSatColl = sampleCollisions((long) particlesLarge * satellitesInOrbit);
+        int smallWithSatColl = sampleCollisions(particlesSmall * satellitesInOrbit);
+        int smallWithLargeColl = sampleCollisions(particlesSmall * particlesLarge);
+        int largeWithLarge = sampleCollisions((long) particlesLarge * particlesLarge);
+
+        // it may theoretically happen for three sats to collide, but then the collision chance should be adjusted
+        largeWithLarge = Math.min(particlesLarge, largeWithLarge * 2);
+
+        // obs saves some satellites from impact.
+        // First all large collisions, then all small collisions, until its capacity is spent
+        int satSavesLeft = observatoryCapacity;
+        if (satSavesLeft > largeWithSatColl) {
+            satSavesLeft -= largeWithSatColl;
+            largeWithSatColl = 0;
+        } else {
+            largeWithSatColl -= satSavesLeft;
+            satSavesLeft = 0;
+        }
+
+        if (satSavesLeft > smallWithSatColl) {
+            smallWithSatColl *= observatoryEffectivity;
+        } else {
+            smallWithSatColl -= (satSavesLeft * observatoryEffectivity);
+        }
+
+        // process effects of collisions
+        particlesLarge -= smallWithLargeColl;
+        particlesSmall += smallWithLargeColl * shreddingFactor;
+
+        satellitesInOrbit -= smallWithSatColl;
+        particlesSmall += smallWithSatColl * shreddingFactor;
+
         satellitesInOrbit -= largeWithSatColl;
         particlesLarge -= largeWithSatColl;
         particlesSmall += largeWithSatColl * shreddingFactor * 2;
 
-        // small debris collision with satellite
-        int smallWithSatColl = sampleCollisions(particlesSmall * satellitesInOrbit);
-        satellitesInOrbit -= smallWithSatColl;
-        particlesSmall += smallWithSatColl * shreddingFactor;
-
-        // small debris collision with large debris
-        int smallWithLargeColl = sampleCollisions(particlesSmall * particlesLarge);
-        particlesLarge -= smallWithLargeColl;
-        particlesSmall += smallWithLargeColl * shreddingFactor;
-
-        // large debris collision with large debris
-        int largeWithLarge = sampleCollisions((long) particlesLarge * particlesLarge);
         particlesLarge -= largeWithLarge * 2;
         particlesSmall += largeWithLarge * shreddingFactor * 2;
+
+        // particles falling back into the atmosphere
+        int fallenLarge = new GeometricDistribution(fallProbDebrisLarge).nextInt();
+        particlesLarge -= fallenLarge;
+        int fallenSmall = new GeometricDistribution(fallProbDebrisSmall).nextInt();
+        particlesSmall -= fallenSmall;
+
+        // launching new satellites
+        daysUntilNextLaunch = Math.max(0, daysUntilNextLaunch - 1);
+        // could have been an if-statement, but this is more stable
+        while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
+            satellitesInOrbit++;
+            daysUntilNextLaunch += (1.0 / launchesPerDay); // may be a distribution?
+        }
     }
 
     /** returns a sample of collisions */
