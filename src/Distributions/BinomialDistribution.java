@@ -4,12 +4,14 @@ public class BinomialDistribution extends Distribution {
 
     protected long nOfExperiments;      // Number of experiments
     protected double success;   // Success probability
+    private BernoulliDistribution bernoulli;
 
+    // A binomial rv is the sum of n Bernoulli rv's with parameter p
     public BinomialDistribution(long nOfExperiments, double success) {
         this.nOfExperiments = nOfExperiments;
         this.success = success;
+        this.bernoulli = new BernoulliDistribution(success);
     }
-
 
     @Override
     public double expectation() {
@@ -27,11 +29,17 @@ public class BinomialDistribution extends Distribution {
     }
 
     public int nextInt() {
-        // A binomial rv is the sum of n Bernoulli rv's with parameter p
-        BernoulliDistribution bd = new BernoulliDistribution(success);
         int sum = 0;
         for (int i = 0; i < nOfExperiments; i++) {
-            if (bd.nextBoolean()) sum++;
+            sum += bernoulli.nextInt();
+        }
+        return sum;
+    }
+
+    public static int next(long nOfExperiments, double success) {
+        int sum = 0;
+        for (int i = 0; i < nOfExperiments; i++) {
+            if (random.nextDouble() < success) sum++;
         }
         return sum;
     }

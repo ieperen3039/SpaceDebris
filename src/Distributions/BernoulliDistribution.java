@@ -24,7 +24,10 @@ public class BernoulliDistribution extends Distribution {
     }
 
     public boolean nextBoolean() {
-        double U = random.nextDouble();
-        return U > 1 - success;
+        return random.nextDouble() < success;
+    }
+
+    public int nextInt() {
+        return nextBoolean() ? 1 : 0;
     }
 }

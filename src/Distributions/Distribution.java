@@ -18,4 +18,14 @@ public abstract class Distribution {
     }
 
     public abstract double nextRandom();
+
+    /** transforms a double to an int, by drawing a random variable for the remainder */
+    public static int randomToInt(double value) {
+        int base = (int) value;
+
+        value -= base;
+        if (random.nextDouble() < value) base++;
+
+        return base;
+    }
 }

@@ -25,6 +25,4 @@ public class NormalDistribution extends Distribution {
         double U = random.nextGaussian();
         return mu + sigma * U;
     }
-
-
 }

@@ -1,38 +1,45 @@
 package Simulation;
 
 import Distributions.BinomialDistribution;
-import Distributions.GeometricDistribution;
 import Distributions.NormalDistribution;
 
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import static Distributions.Distribution.randomToInt;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /**
  * all values are either integer or double precision, time is measured in days, distance is measured in meters.
  * @author Geert van Ieperen created on 22-5-2018.
  */
+@SuppressWarnings("WeakerAccess")
 public class SpaceSimulation extends Thread {
     /** number of simulations run */
-    public static final int NOF_RUNS = 100;
+    public static final int NOF_RUNS = 50;
     /** number of days for one simulation */
     public static final int MAX_TIME = 100;
-    /** chance that one particle hits one specific satellite in one year */
+    /** If this is false, binomial distributions may be used for collisions */
+    private static final boolean FORCE_NORMAL_DIST = true;
+
+    /** chance that one particle hits one specific satellite in one day */
     public static final double probDebrisCollision = 0;
     /** average period for debris to fall into the atmosphere or outer space in days */
-    public static final double fallProbDebrisSmall = 0;
+    public static final double fallPeriodDebrisSmall = 0;
     /** average period for debris to fall into the atmosphere or outer space in days */
-    public static final double fallProbDebrisLarge = 0;
+    public static final double fallPeriodDebrisLarge = 0;
     /** the number of particles a satellite creates when colliding */
     public static final int shreddingFactor = 0;
     /** max satellite launches per day */
-    public static final double launchesPerDay = 1 / 356.0;
+    public static final double launchesPerDay = 0 / 365.25;
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 0;
     /** number of satellites that an observatory can resolve within one day */
-    private static final int observatoryCapacity = 3;
+    public static final int observatoryCapacity = 0;
     /** observatory effectivity to save a sat from a SMALL particle */
-    private static final double observatoryEffectivity = 0.9;
+    public static final double observatoryEffectivity = 0;
 
     // note that every simulation is a new SpaceSimulation object
     /** particles smaller than a whole satellite, large enough to destroy a satellite */
@@ -61,6 +68,7 @@ public class SpaceSimulation extends Thread {
     public void run() {
         completion.countDown();
         if (completion.getCount() != 1) throw new IllegalStateException("Simulation can only be run once!");
+        results.addResults(particlesSmall, particlesLarge, satellitesInOrbit);
 
         for (int i = 0; i < MAX_TIME; i++) {
             progressOneDay();
@@ -77,10 +85,10 @@ public class SpaceSimulation extends Thread {
         int largeWithSatColl = sampleCollisions((long) particlesLarge * satellitesInOrbit);
         int smallWithSatColl = sampleCollisions(particlesSmall * satellitesInOrbit);
         int smallWithLargeColl = sampleCollisions(particlesSmall * particlesLarge);
-        int largeWithLarge = sampleCollisions((long) particlesLarge * particlesLarge);
+        int largeWithLarge = sampleCollisions((long) particlesLarge * (long) particlesLarge);
 
         // it may theoretically happen for three sats to collide, but then the collision chance should be adjusted
-        largeWithLarge = Math.min(particlesLarge, largeWithLarge * 2);
+        largeWithLarge = min(particlesLarge, largeWithLarge * 2);
 
         // obs saves some satellites from impact.
         // First all large collisions, then all small collisions, until its capacity is spent
@@ -93,11 +101,7 @@ public class SpaceSimulation extends Thread {
             satSavesLeft = 0;
         }
 
-        if (satSavesLeft > smallWithSatColl) {
-            smallWithSatColl *= observatoryEffectivity;
-        } else {
-            smallWithSatColl -= (satSavesLeft * observatoryEffectivity);
-        }
+        smallWithSatColl -= randomToInt(observatoryEffectivity * min(smallWithSatColl, satSavesLeft));
 
         // process effects of collisions
         particlesLarge -= smallWithLargeColl;
@@ -114,13 +118,13 @@ public class SpaceSimulation extends Thread {
         particlesSmall += largeWithLarge * shreddingFactor * 2;
 
         // particles falling back into the atmosphere
-        int fallenLarge = new GeometricDistribution(fallProbDebrisLarge).nextInt();
+        int fallenLarge = BinomialDistribution.next(particlesLarge, 1 / fallPeriodDebrisLarge);
         particlesLarge -= fallenLarge;
-        int fallenSmall = new GeometricDistribution(fallProbDebrisSmall).nextInt();
+        int fallenSmall = BinomialDistribution.next(particlesLarge, 1 / fallPeriodDebrisSmall);
         particlesSmall -= fallenSmall;
 
         // launching new satellites
-        daysUntilNextLaunch = Math.max(0, daysUntilNextLaunch - 1);
+        daysUntilNextLaunch = max(0, daysUntilNextLaunch - 1);
         // could have been an if-statement, but this is more stable
         while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
             satellitesInOrbit++;
@@ -132,22 +136,24 @@ public class SpaceSimulation extends Thread {
     private static int sampleCollisions(long n) {
         double p = SpaceSimulation.probDebrisCollision;
 
-        if (n > (9 * (1 - p) / p)) { // if the binomial approaches an normal dist
+        if (FORCE_NORMAL_DIST || n > (9 * (1 - p) / p)) { // if the binomial approaches an normal dist
             NormalDistribution dist = new NormalDistribution(n * p, n * p * (1 - p));
-            return (int) (dist.nextRandom() + 0.5); // +0.5 for rounding
+            // TODO fix correct handling
+            return max(randomToInt(dist.nextRandom()), 0);
 
         } else {
-            return new BinomialDistribution(n, p).nextInt();
+            return BinomialDistribution.next(n, p);
         }
     }
 
     // run NOF_RUNS simulations and save everything in a csv file
     public static void main(String[] args) throws Exception {
-        PrintWriter output = new PrintWriter("data.csv");
+//        PrintWriter output = new PrintWriter("data.csv");
+        PrintStream output = System.out;
 
         // run sims
         for (int i = 0; i < NOF_RUNS; i++) {
-            System.out.print("\rProgress: " + (i + 1) + "/" + NOF_RUNS);
+//            System.out.print("\rProgress: " + (i + 1) + "/" + NOF_RUNS);
 
             SpaceSimulation suite = new SpaceSimulation();
             suite.run();
