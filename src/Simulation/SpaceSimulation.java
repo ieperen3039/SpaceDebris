@@ -39,7 +39,8 @@ public class SpaceSimulation extends Thread {
     public static final double launchesPerDay = 90 / 365.25;
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 1200;
-    /** number of satellites that an observatory can resolve within one day */
+    /** number of satellites that an observatory can resolve within 24 hours */
+    private static final double observatorySavesPerDay = 0.25;
     public static final int observatoryCapacity = 2;
 
     /** chance that one small particle hits one large object in one day */
@@ -75,8 +76,10 @@ public class SpaceSimulation extends Thread {
      * runs a single simulation run
      */
     public void run() {
+        Observatory esa = new Observatory();
         for (int i = 0; i < maxTime; i++) {
-            progressOneDay();
+            progressOneDay(esa);
+            esa.nextDay();
 
             if (satellitesInOrbit < 0 || particlesSmall < 0 || particlesLarge < 0 || particlesHugh < 0) {
                 throw new IllegalStateException(String.format(
@@ -103,8 +106,11 @@ public class SpaceSimulation extends Thread {
         return results;
     }
 
-    /** updates and calculates the changes for one day */
-    private void progressOneDay() {
+    /**
+     * updates and calculates the changes for one day
+     * @param esa
+     */
+    private void progressOneDay(Observatory esa) {
         // different types of collisions
         int collSatWithHugh = sampleOptimized((long) particlesHugh * satellitesInOrbit, probDangerLarge);
         int collSatWithLarge = sampleOptimized(particlesLarge * satellitesInOrbit, probDangerSmall);
@@ -115,7 +121,6 @@ public class SpaceSimulation extends Thread {
         // it may theoretically happen for three sats to collide, but then the collision chance should be adjusted
         collHughWithHugh = min(particlesHugh, collHughWithHugh * 2);
 
-        Observatory esa = new Observatory();
         collSatWithHugh = sampleOptimized(esa.save(collSatWithHugh), collisionByDangerRisk);
         collSatWithLarge = sampleOptimized(esa.save(collSatWithLarge), collisionByDangerRisk);
         collSatWithSmall = sampleOptimized(esa.save(collSatWithSmall), collisionByDangerRisk);
@@ -148,7 +153,7 @@ public class SpaceSimulation extends Thread {
         // could have been an if-statement, but this is more stable
         while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
             satellitesInOrbit++;
-            daysUntilNextLaunch += (1.0 / launchesPerDay); // may be a distribution?
+            daysUntilNextLaunch += (1.0 / launchesPerDay);
         }
     }
 
@@ -191,6 +196,7 @@ public class SpaceSimulation extends Thread {
     // may save a few collisions
     class Observatory {
         private int savesLeft = observatoryCapacity;
+        private double daysUntilRefresh;
 
         /**
          * try to save the satellites
@@ -206,6 +212,14 @@ public class SpaceSimulation extends Thread {
                 number -= savesLeft;
                 savesLeft = 0;
                 return number;
+            }
+        }
+
+        public void nextDay() {
+            daysUntilRefresh = max(0, daysUntilRefresh - 1);
+            while (daysUntilRefresh < 1 && savesLeft < observatoryCapacity) {
+                savesLeft++;
+                daysUntilRefresh += (1.0 / observatorySavesPerDay);
             }
         }
     }

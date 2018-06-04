@@ -9,9 +9,9 @@ import java.util.List;
  */
 public class Main {
     /** number of simulations run */
-    public static final int NOF_RUNS = 3;
+    public static final int NOF_RUNS = 1;
     /** number of days for one simulation */
-    public static final int MAX_TIME = 365 * 10;
+    public static final int MAX_TIME = 365 * 5;
     /** how many parallel threads may run at once */
     private static final int THREAD_POOL = 5;
 
