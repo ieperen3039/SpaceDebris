@@ -15,6 +15,7 @@ public class SpaceResults {
     private final List<Integer> activeSatellites;
     private final List<Integer> spaceFlightsQueued;
     private final List<Long> totalParticles;
+    private int lostSattellites = 0;
 
     public SpaceResults(int nOfResults) {
         smallParticles = new ArrayList<>(nOfResults);
@@ -34,6 +35,10 @@ public class SpaceResults {
         totalParticles.add(pSmall + pLarge + pHugh);
     }
 
+    public void addLostSatellites(int n) {
+        lostSattellites += n;
+    }
+
     public List<Long> getLargeParticles() {
         return Collections.unmodifiableList(largeParticles);
     }
@@ -48,5 +53,9 @@ public class SpaceResults {
 
     public List<Long> getTotalParticles() {
         return Collections.unmodifiableList(totalParticles);
+    }
+
+    public int lostSatellitesMean() {
+        return lostSattellites;
     }
 }

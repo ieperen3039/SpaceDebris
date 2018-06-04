@@ -43,7 +43,7 @@ public class Main {
 
         System.out.println("Simulation time: " + (System.currentTimeMillis() - startTime) + " ms");
 
-        output.println(results.totals());
+        output.println(results.lostSatellites());
         output.close();
     }
 

@@ -45,11 +45,11 @@ public class SpaceSimulation extends Thread {
 
     /** chance that one small particle hits one large object in one day */
     // 12 avoidances per year: with 780_000 particles and 1200 satellites, we have 780000 * 1200 * p = 12
-    public static final double probDangerSmall = probSplit(100.0 / (satellitesRequiredInOrbit * 780_000), 365);
+    public static final double probDangerSmall = probSplit(12.0 / (satellitesRequiredInOrbit * 780_000), 365);
     /** chance that one large particle hits one other large object (or sat) in one day */
     public static final double probDangerLarge = probDangerSmall * 4; // *4 because of surface
-    /** chance of collision when alarm is raised */
-    private static final double collisionByDangerRisk = 1.0 / 100;
+    /** average chance of collision when alarm is raised */
+    private static final double collisionByDangerRisk = 1.0 / 25_000;
 
     /** particles [1 ... 10] cm */
     private long particlesSmall = 750_000;
@@ -128,6 +128,7 @@ public class SpaceSimulation extends Thread {
         satellitesInOrbit -= collSatWithHugh;
         particlesHugh -= collSatWithHugh;
         shredIntoParticles(collSatWithHugh * 2);
+        results.addLostSatellites(collSatWithHugh);
 
         particlesHugh -= max(collHughWithHugh * 2, 0);
         shredIntoParticles(collHughWithHugh * 2);
@@ -138,9 +139,11 @@ public class SpaceSimulation extends Thread {
 
         satellitesInOrbit -= collSatWithLarge;
         shredIntoParticles(collSatWithLarge);
+        results.addLostSatellites(collSatWithLarge);
 
         satellitesInOrbit -= collSatWithSmall;
         particlesHugh += collSatWithSmall;
+        results.addLostSatellites(collSatWithSmall);
 
         // particles falling back into the atmosphere
         int fallenHugh = sampleOptimized(particlesHugh, fallProbLarge);
