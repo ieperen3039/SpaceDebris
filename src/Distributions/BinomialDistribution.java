@@ -36,7 +36,7 @@ public class BinomialDistribution extends Distribution {
         return sum;
     }
 
-    public static int next(long nOfExperiments, double success) {
+    public static int get(long nOfExperiments, double success) {
         int sum = 0;
         for (int i = 0; i < nOfExperiments; i++) {
             if (random.nextDouble() < success) sum++;

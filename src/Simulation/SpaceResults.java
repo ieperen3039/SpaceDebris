@@ -2,7 +2,6 @@ package Simulation;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -11,24 +10,31 @@ import java.util.List;
 public class SpaceResults {
     /** particles over time */
     private final List<Long> smallParticles;
-    private final List<Integer> largeParticles;
+    private final List<Long> largeParticles;
+    private final List<Integer> satellitesInOrbit;
+    private final List<Integer> activeSatellites;
     private final List<Integer> spaceFlightsQueued;
-    private int nOfResults;
+    private final List<Long> totalParticles;
 
-    public SpaceResults() {
-        smallParticles = new ArrayList<>();
-        largeParticles = new ArrayList<>();
-        spaceFlightsQueued = new ArrayList<>();
+    public SpaceResults(int nOfResults) {
+        smallParticles = new ArrayList<>(nOfResults);
+        largeParticles = new ArrayList<>(nOfResults);
+        spaceFlightsQueued = new ArrayList<>(nOfResults);
+        satellitesInOrbit = new ArrayList<>(nOfResults);
+        activeSatellites = new ArrayList<>(nOfResults);
+        totalParticles = new ArrayList<>(nOfResults);
     }
 
-    public void addResults(long pSmall, int pLarge, int satsInOrbit) {
+    public void addResults(long pSmall, long pLarge, int pHugh, int satsInOrbit) {
         smallParticles.add(pSmall);
         largeParticles.add(pLarge);
+        satellitesInOrbit.add(pHugh + satsInOrbit);
+        activeSatellites.add(satsInOrbit);
         spaceFlightsQueued.add(SpaceSimulation.satellitesRequiredInOrbit - satsInOrbit);
-        nOfResults++;
+        totalParticles.add(pSmall + pLarge + pHugh);
     }
 
-    public List<Integer> getLargeParticles() {
+    public List<Long> getLargeParticles() {
         return Collections.unmodifiableList(largeParticles);
     }
 
@@ -41,14 +47,6 @@ public class SpaceResults {
     }
 
     public List<Long> getTotalParticles() {
-        Iterator<Integer> larges = largeParticles.iterator();
-
-        List<Long> list = new ArrayList<>(nOfResults);
-        for (Long small : smallParticles) {
-            Long total = small + larges.next();
-            list.add(total);
-        }
-
-        return list;
+        return Collections.unmodifiableList(totalParticles);
     }
 }

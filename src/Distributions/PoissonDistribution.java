@@ -20,6 +20,10 @@ public class PoissonDistribution extends Distribution {
 
     @Override
     public double nextRandom() {
+        return get(lambda);
+    }
+
+    public static int get(double lambda) {
         // Discrete inverse transform method
         double U = random.nextDouble();
         int index = 0;
@@ -30,8 +34,6 @@ public class PoissonDistribution extends Distribution {
             current = current * lambda / (1.0 * index);
             sum += current;
         }
-        return index * 1.0;
+        return index;
     }
-
-
 }
