@@ -32,7 +32,7 @@ public class SpaceSimulation extends Thread {
     public static final int fallPeriodDebrisLarge = 2000;
     private static final double fallProbLarge = probSplit(0.5, fallPeriodDebrisLarge);
     /** the number of particles a satellite creates when colliding */
-    public static final double shreddingFactor = 5000;
+    public static final double shreddingFactor = 10_000;
     /** the fraction of shredded particles that is smaller than 10 cm */
     public static final double shreddingSmallFraction = 0.75;
     /** max satellite launches per day */
@@ -43,13 +43,17 @@ public class SpaceSimulation extends Thread {
     private static final double observatorySavesPerDay = 0.25;
     public static final int observatoryCapacity = 2;
 
+    /** number of hugh particles generated upon launching a new satellite */
+    public static final int launchStages = 2;
+    public static final int launchNewParticles = 100;
+
     /** chance that one small particle hits one large object in one day */
-    // 12 avoidances per year: with 780_000 particles and 1200 satellites, we have 780000 * 1200 * p = 12
-    public static final double probDangerSmall = probSplit(12.0 / (satellitesRequiredInOrbit * 780_000), 365);
+    // 12 avoidances per year: with 780_000 particles and 19 satellites, we have 780000 * 19 * p = 12
+    public static final double probDangerSmall = probSplit(12.0 / (19 * 780_000), 365);
     /** chance that one large particle hits one other large object (or sat) in one day */
     public static final double probDangerLarge = probDangerSmall * 4; // *4 because of surface
     /** average chance of collision when alarm is raised */
-    private static final double collisionByDangerRisk = 1.0 / 25_000;
+    private static final double collisionByDangerRisk = 1.0 / 50_000;
 
     /** particles [1 ... 10] cm */
     private long particlesSmall = 750_000;
@@ -108,22 +112,23 @@ public class SpaceSimulation extends Thread {
 
     /**
      * updates and calculates the changes for one day
-     * @param esa
+     * @param obs an observatory capable of saving satellites from collisions
      */
-    private void progressOneDay(Observatory esa) {
+    private void progressOneDay(Observatory obs) {
         // different types of collisions
         int collSatWithHugh = sampleOptimized((long) particlesHugh * satellitesInOrbit, probDangerLarge);
         int collSatWithLarge = sampleOptimized(particlesLarge * satellitesInOrbit, probDangerSmall);
         int collSatWithSmall = sampleOptimized(particlesSmall * satellitesInOrbit, probDangerSmall);
         int collHughWithLarge = sampleOptimized(particlesLarge * particlesHugh, probDangerSmall * collisionByDangerRisk);
-        int collHughWithHugh = sampleOptimized((long) particlesHugh * particlesHugh, probDangerLarge * collisionByDangerRisk);
+        int collHughWithHugh = sampleOptimized((long) particlesHugh * (particlesHugh - 1), probDangerLarge * collisionByDangerRisk);
 
         // it may theoretically happen for three sats to collide, but then the collision chance should be adjusted
         collHughWithHugh = min(particlesHugh, collHughWithHugh * 2);
 
-        collSatWithHugh = sampleOptimized(esa.save(collSatWithHugh), collisionByDangerRisk);
-        collSatWithLarge = sampleOptimized(esa.save(collSatWithLarge), collisionByDangerRisk);
-        collSatWithSmall = sampleOptimized(esa.save(collSatWithSmall), collisionByDangerRisk);
+        // the observatory tries to resolve plausible collisions. upon failing, there is still only little chance on collision
+        collSatWithHugh = sampleOptimized(obs.save(collSatWithHugh), collisionByDangerRisk);
+        collSatWithLarge = sampleOptimized(obs.save(collSatWithLarge), collisionByDangerRisk);
+        collSatWithSmall = sampleOptimized(obs.save(collSatWithSmall), collisionByDangerRisk);
 
         satellitesInOrbit -= collSatWithHugh;
         particlesHugh -= collSatWithHugh;
@@ -157,6 +162,8 @@ public class SpaceSimulation extends Thread {
         while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
             satellitesInOrbit++;
             daysUntilNextLaunch += (1.0 / launchesPerDay);
+            particlesHugh += launchNewParticles;
+            particlesLarge += launchStages;
         }
     }
 
