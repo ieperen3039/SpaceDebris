@@ -1,14 +1,22 @@
 package Results;
 
-import Distributions.Interval;
-
 /**
  * @author Geert van Ieperen created on 7-6-2018.
  */
 public interface MultiSpaceResults {
-    long[] totals();
+    double[] totals();
 
     Interval lostSatellitesConf();
 
     double lostSatellitesMean();
+
+    double savesMean();
+
+    Interval savesConf();
+
+    double[] getActiveSatellites();
+
+    double[] getSpaceFlightsQueued();
+
+    double[] getTotalSatellites();
 }

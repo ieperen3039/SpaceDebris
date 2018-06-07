@@ -1,6 +1,7 @@
 package Simulation;
 
 import Distributions.*;
+import Results.SpaceResults;
 
 import static Distributions.Distribution.randomToInt;
 import static java.lang.Math.max;
@@ -43,7 +44,7 @@ public class SpaceSimulation extends Thread {
             new ExponentialDistribution(1.0 / (shreddingFactor * shreddingSmallFraction));
 
     /** max satellite launches per day */
-    public static final double launchesPerDay = 90.0 / YEARS;
+    public static final double launchesPerDay = 1;//90.0 / YEARS;
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 1200;
     /** number of satellites that an observatory can resolve within 24 hours */
@@ -191,11 +192,12 @@ public class SpaceSimulation extends Thread {
 
     /** returns a sample of collisions */
     private static int sampleOptimized(long n, double p) {
-        if (n < 0) {
-            throw new IllegalStateException("n < 0: " + n);
-
-        } else if (n == 0) {
-            return 0;
+        if (n <= 0) {
+            if (n == 0) {
+                return 0;
+            } else {
+                throw new IllegalStateException("n < 0: " + n);
+            }
 
         } else if (FORCE_NORMAL_DIST || n > (9 * (1 - p) / p)) { // if the binomial approaches an normal dist
             double est = NormalDistribution.get(n * p, n * p * (1 - p));
@@ -233,10 +235,12 @@ public class SpaceSimulation extends Thread {
         public int save(int number) {
             if (savesLeft > number) {
                 savesLeft -= number;
+                results.addSaves(number);
                 return 0;
 
             } else {
                 number -= savesLeft;
+                results.addSaves(savesLeft);
                 savesLeft = 0;
                 return number;
             }

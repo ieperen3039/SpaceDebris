@@ -1,4 +1,4 @@
-package Distributions;
+package Results;
 
 import java.util.Locale;
 
@@ -14,7 +14,7 @@ public class Interval {
         this.upper = upper;
     }
 
-    public Interval(double variance, double mean, int sampleSize) {
+    public Interval(double mean, double variance, int sampleSize) {
         double zAlpha = 1.96;
         double halfwidth = zAlpha * Math.sqrt(variance / sampleSize);
         lower = mean - halfwidth;

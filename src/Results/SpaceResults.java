@@ -1,4 +1,6 @@
-package Simulation;
+package Results;
+
+import Simulation.SpaceSimulation;
 
 /**
  * @author Geert van Ieperen created on 24-5-2018.
@@ -12,8 +14,9 @@ public class SpaceResults {
     private final int[] spaceFlightsQueued;
     private final long[] totalParticles;
 
-    private int lostSattellites = 0;
+    private int lostSatellites = 0;
     private int index = 0;
+    private int saves = 0;
 
     public SpaceResults(int nOfResults) {
         smallParticles = new long[nOfResults];
@@ -35,7 +38,11 @@ public class SpaceResults {
     }
 
     public void addLostSatellites(int n) {
-        lostSattellites += n;
+        lostSatellites += n;
+    }
+
+    public void addSaves(int number) {
+        saves += number;
     }
 
     public long[] getLargeParticles() {
@@ -62,7 +69,11 @@ public class SpaceResults {
         return totalParticles;
     }
 
-    public int lostSatellitesMean() {
-        return lostSattellites;
+    public int getLostSatellites() {
+        return lostSatellites;
+    }
+
+    public int getSaves() {
+        return saves;
     }
 }
