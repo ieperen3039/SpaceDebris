@@ -9,9 +9,9 @@ import java.util.List;
  */
 public class Main {
     /** number of simulations run */
-    public static final int NOF_RUNS = 1;
+    public static final int NOF_RUNS = 10;
     /** number of days for one simulation */
-    public static final int MAX_TIME = 365 * 5;
+    public static final int MAX_TIME = 365 * 100;
     /** how many parallel threads may run at once */
     private static final int THREAD_POOL = 5;
 
@@ -43,7 +43,13 @@ public class Main {
 
         System.out.println("Simulation time: " + (System.currentTimeMillis() - startTime) + " ms");
 
-        output.println(results.lostSatellites());
+        output.println(results.lostSatellitesMean() + " : " + results.lostSatellitesConf());
+
+        long[] totals = results.totals();
+        for (int i = 0; i < totals.length; i += 200) {
+            output.print(totals[i]);
+            output.print(", ");
+        }
         output.close();
     }
 

@@ -2,7 +2,6 @@ package Simulation;
 
 import Distributions.Interval;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -12,11 +11,13 @@ public class MultiSpaceResults {
     private final int nOfRuns;
     private final int runLength;
     private long[] meanParticles;
-    private int meanLostSatellites;
-    private int meanLostSatellites2;
+    private double meanLostSatellites;
+    private double meanLostSatellites2;
     private boolean isWrappedUp = false;
 
     public MultiSpaceResults(int runs, int runLength) {
+        if (runs == 0 || runLength == 0)
+            throw new IllegalArgumentException("runs = " + runs + ", length = " + runLength);
         this.nOfRuns = runs;
         this.runLength = runLength;
 
@@ -25,7 +26,7 @@ public class MultiSpaceResults {
         meanLostSatellites2 = 0;
     }
 
-    public void add(SpaceResults results) {
+    public synchronized void add(SpaceResults results) {
         int lostSatellitesMean = results.lostSatellitesMean();
         meanLostSatellites += lostSatellitesMean;
         meanLostSatellites2 += lostSatellitesMean * lostSatellitesMean;
@@ -43,17 +44,24 @@ public class MultiSpaceResults {
             meanParticles[i] /= nOfRuns;
         }
 
+        meanLostSatellites /= nOfRuns;
+        meanLostSatellites2 /= nOfRuns;
+
         isWrappedUp = true;
         return this;
     }
 
-    public String totals() {
-        return Arrays.toString(meanParticles);
+    public long[] totals() {
+        return meanParticles;
     }
 
-    public Interval lostSatellites() {
+    public Interval lostSatellitesConf() {
         // TODO check this
         double variance = meanLostSatellites2 - meanLostSatellites * meanLostSatellites;
         return new Interval(variance, meanLostSatellites, nOfRuns);
+    }
+
+    public double lostSatellitesMean() {
+        return meanLostSatellites;
     }
 }

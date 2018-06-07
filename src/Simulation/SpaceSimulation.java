@@ -10,10 +10,10 @@ import static java.lang.Math.min;
 
 /**
  * all values are either integer/long or double precision, time is measured in days, distance is measured in meters.
- * Values are derived from - (not) http://www.duncansteel.com/archives/1425
- *                         - (not) http://www.raa-journal.org/raa/index.php/raa/article/viewFile/1587/1442
+ * Values are derived from - (not) http://www.raa-journal.org/raa/index.php/raa/article/viewFile/1587/1442
  *                         - https://www.esa.int/Our_Activities/Operations/Space_Debris/Reentry_and_collision_avoidance
  *                         - https://www.esa.int/Our_Activities/Operations/Space_Debris/Space_debris_by_the_numbers
+ *                         - https://www.livescience.com/62113-how-much-space-junk-hits-earth.html
  *                         - http://spaceflight101.com/2017-space-launch-statistics/
  *                         - http://www.stat.yale.edu/~pollard/Courses/241.fall97/Poisson.pdf
  * @author Geert van Ieperen created on 22-5-2018.
@@ -23,24 +23,26 @@ public class SpaceSimulation extends Thread {
     /** If this is false, poisson distributions may be used for collisions */
     private static final boolean FORCE_NORMAL_DIST = false;
     /** if the error resulting from assuming poisson at binomials falls below this margin, poisson is used instead */
-    private static final double POISSON_ERROR_MARGIN = 0.01;
+    private static final double POISSON_ERROR_MARGIN = 0.001;
+
+    /** Conversion factors */
+    private static final double YEARS = 365.25;
+    private static final int YEARS_INT = (int) YEARS;
+    private static final int NOF_TRACKED_OBJECTS = 38_700; // a few values are based on this
 
     /** average period for debris to fall into the atmosphere or outer space in days */
-    public static final int fallPeriodDebrisSmall = 2000;
-    private static final double fallProbSmall = probSplit(0.5, fallPeriodDebrisSmall);
-    /** average period for debris to fall into the atmosphere or outer space in days */
-    public static final int fallPeriodDebrisLarge = 2000;
-    private static final double fallProbLarge = probSplit(0.5, fallPeriodDebrisLarge);
+    private static final double fallProbSmall = probSplit(300 / NOF_TRACKED_OBJECTS, YEARS_INT);
+    private static final double fallProbLarge = fallProbSmall;
     /** the number of particles a satellite creates when colliding */
     public static final double shreddingFactor = 10_000;
     /** the fraction of shredded particles that is smaller than 10 cm */
     public static final double shreddingSmallFraction = 0.75;
     /** max satellite launches per day */
-    public static final double launchesPerDay = 90 / 365.25;
+    public static final double launchesPerDay = 90 / YEARS;
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 1200;
     /** number of satellites that an observatory can resolve within 24 hours */
-    private static final double observatorySavesPerDay = 0.25;
+    private static final double observatorySavesPerDay = 0.01;
     public static final int observatoryCapacity = 2;
 
     /** number of hugh particles generated upon launching a new satellite */
@@ -48,8 +50,8 @@ public class SpaceSimulation extends Thread {
     public static final int launchNewParticles = 100;
 
     /** chance that one small particle hits one large object in one day */
-    // 12 avoidances per year: with 780_000 particles and 19 satellites, we have 780000 * 19 * p = 12
-    public static final double probDangerSmall = probSplit(12.0 / (19 * 780_000), 365);
+    // 12 avoidances per year: with 38_700 tracked particles and 19 satellites, we have 38_700 * 19 * p = 12
+    public static final double probDangerSmall = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEARS_INT);
     /** chance that one large particle hits one other large object (or sat) in one day */
     public static final double probDangerLarge = probDangerSmall * 4; // *4 because of surface
     /** average chance of collision when alarm is raised */
@@ -151,10 +153,9 @@ public class SpaceSimulation extends Thread {
         results.addLostSatellites(collSatWithSmall);
 
         // particles falling back into the atmosphere
-        int fallenHugh = sampleOptimized(particlesHugh, fallProbLarge);
-        particlesHugh -= fallenHugh;
-        int fallenLarge = sampleOptimized(particlesLarge, fallProbSmall);
-        particlesLarge -= fallenLarge;
+        particlesHugh -= sampleOptimized(particlesHugh, fallProbLarge);
+        particlesLarge -= sampleOptimized(particlesLarge, fallProbSmall);
+        particlesSmall -= sampleOptimized(particlesSmall, fallProbSmall);
 
         // launching new satellites
         daysUntilNextLaunch = max(0, daysUntilNextLaunch - 1);
