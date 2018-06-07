@@ -17,6 +17,11 @@ public class ExponentialDistribution extends Distribution {
         this.lambda = lambda;
     }
 
+    public static double get(double lambda) {
+        double u = random.nextDouble();
+        return -Math.log(u) / lambda;
+    }
+
     @Override
     public double expectation() {
         return 1 / lambda;
@@ -34,8 +39,7 @@ public class ExponentialDistribution extends Distribution {
 
     @Override
     public double nextRandom() {
-        double u = random.nextDouble();
-        return -Math.log(u) / lambda;
+        return get(lambda);
     }
 
 }

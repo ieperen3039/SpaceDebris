@@ -1,58 +1,65 @@
 package Simulation;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * @author Geert van Ieperen created on 24-5-2018.
  */
 public class SpaceResults {
     /** particles over time */
-    private final List<Long> smallParticles;
-    private final List<Long> largeParticles;
-    private final List<Integer> satellitesInOrbit;
-    private final List<Integer> activeSatellites;
-    private final List<Integer> spaceFlightsQueued;
-    private final List<Long> totalParticles;
+    private final long[] smallParticles;
+    private final long[] largeParticles;
+    private final int[] satellitesInOrbit;
+    private final int[] activeSatellites;
+    private final int[] spaceFlightsQueued;
+    private final long[] totalParticles;
+
     private int lostSattellites = 0;
+    private int index = 0;
 
     public SpaceResults(int nOfResults) {
-        smallParticles = new ArrayList<>(nOfResults);
-        largeParticles = new ArrayList<>(nOfResults);
-        spaceFlightsQueued = new ArrayList<>(nOfResults);
-        satellitesInOrbit = new ArrayList<>(nOfResults);
-        activeSatellites = new ArrayList<>(nOfResults);
-        totalParticles = new ArrayList<>(nOfResults);
+        smallParticles = new long[nOfResults];
+        largeParticles = new long[nOfResults];
+        spaceFlightsQueued = new int[nOfResults];
+        satellitesInOrbit = new int[nOfResults];
+        activeSatellites = new int[nOfResults];
+        totalParticles = new long[nOfResults];
     }
 
     public void addResults(long pSmall, long pLarge, int pHugh, int satsInOrbit) {
-        smallParticles.add(pSmall);
-        largeParticles.add(pLarge);
-        satellitesInOrbit.add(pHugh + satsInOrbit);
-        activeSatellites.add(satsInOrbit);
-        spaceFlightsQueued.add(SpaceSimulation.satellitesRequiredInOrbit - satsInOrbit);
-        totalParticles.add(pSmall + pLarge + pHugh);
+        smallParticles[index] = pSmall;
+        largeParticles[index] = pLarge;
+        satellitesInOrbit[index] = pHugh + satsInOrbit;
+        activeSatellites[index] = satsInOrbit;
+        spaceFlightsQueued[index] = SpaceSimulation.satellitesRequiredInOrbit - satsInOrbit;
+        totalParticles[index] = pSmall + pLarge + pHugh;
+        index++;
     }
 
     public void addLostSatellites(int n) {
         lostSattellites += n;
     }
 
-    public List<Long> getLargeParticles() {
-        return Collections.unmodifiableList(largeParticles);
+    public long[] getLargeParticles() {
+        return largeParticles;
     }
 
-    public List<Long> getSmallParticles() {
-        return Collections.unmodifiableList(smallParticles);
+    public long[] getSmallParticles() {
+        return smallParticles;
     }
 
-    public List<Integer> getSpaceFlightsQueued() {
-        return Collections.unmodifiableList(spaceFlightsQueued);
+    public int[] getSpaceFlightsQueued() {
+        return spaceFlightsQueued;
     }
 
-    public List<Long> getTotalParticles() {
-        return Collections.unmodifiableList(totalParticles);
+    public int[] getSatellitesInOrbit() {
+        return satellitesInOrbit;
+    }
+
+    public int[] getActiveSatellites() {
+        return activeSatellites;
+    }
+
+    public long[] getTotalParticles() {
+        return totalParticles;
     }
 
     public int lostSatellitesMean() {

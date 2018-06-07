@@ -1,42 +1,49 @@
-package Simulation;
+package Results;
 
 import Distributions.Interval;
-
-import java.util.List;
 
 /**
  * @author Geert van Ieperen created on 4-6-2018.
  */
-public class MultiSpaceResults {
+public class MultiSpaceResultImpl implements MultiSpaceResults, MultiResultCollector {
     private final int nOfRuns;
-    private final int runLength;
     private long[] meanParticles;
     private double meanLostSatellites;
     private double meanLostSatellites2;
     private boolean isWrappedUp = false;
 
-    public MultiSpaceResults(int runs, int runLength) {
+    private MultiSpaceResultImpl(int runs, int runLength) {
         if (runs == 0 || runLength == 0)
             throw new IllegalArgumentException("runs = " + runs + ", length = " + runLength);
         this.nOfRuns = runs;
-        this.runLength = runLength;
 
         meanParticles = new long[runLength];
         meanLostSatellites = 0;
         meanLostSatellites2 = 0;
     }
 
-    public synchronized void add(SpaceResults results) {
+    public static MultiResultCollector getCollector(int runs, int runLength) {
+        return new MultiSpaceResultImpl(runs, runLength);
+    }
+
+    @Override
+    public synchronized void add(Simulation.SpaceResults results) {
         int lostSatellitesMean = results.lostSatellitesMean();
         meanLostSatellites += lostSatellitesMean;
         meanLostSatellites2 += lostSatellitesMean * lostSatellitesMean;
 
-        List<Long> particles = results.getTotalParticles();
+        long[] particles = results.getTotalParticles();
+        addAll(particles, meanParticles);
+    }
+
+    private static void addAll(long[] source, long[] total) {
+        int runLength = total.length;
         for (int k = 0; k < runLength; k++) {
-            meanParticles[k] += particles.get(k);
+            total[k] += source[k];
         }
     }
 
+    @Override
     public MultiSpaceResults wrapUp() {
         if (isWrappedUp) throw new IllegalStateException("wrapUp is called twice");
 
@@ -51,16 +58,19 @@ public class MultiSpaceResults {
         return this;
     }
 
+    @Override
     public long[] totals() {
         return meanParticles;
     }
 
+    @Override
     public Interval lostSatellitesConf() {
         // TODO check this
         double variance = meanLostSatellites2 - meanLostSatellites * meanLostSatellites;
         return new Interval(variance, meanLostSatellites, nOfRuns);
     }
 
+    @Override
     public double lostSatellitesMean() {
         return meanLostSatellites;
     }

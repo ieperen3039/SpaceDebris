@@ -1,8 +1,6 @@
 package Simulation;
 
-import Distributions.BinomialDistribution;
-import Distributions.NormalDistribution;
-import Distributions.PoissonDistribution;
+import Distributions.*;
 
 import static Distributions.Distribution.randomToInt;
 import static java.lang.Math.max;
@@ -15,7 +13,9 @@ import static java.lang.Math.min;
  *                         - https://www.esa.int/Our_Activities/Operations/Space_Debris/Space_debris_by_the_numbers
  *                         - https://www.livescience.com/62113-how-much-space-junk-hits-earth.html
  *                         - http://spaceflight101.com/2017-space-launch-statistics/
- *                         - http://www.stat.yale.edu/~pollard/Courses/241.fall97/Poisson.pdf
+ *                         - https://www.esa.int/Our_Activities/Operations/Space_Debris/About_space_debris
+ *
+ * poisson distribution:   - http://www.stat.yale.edu/~pollard/Courses/241.fall97/Poisson.pdf
  * @author Geert van Ieperen created on 22-5-2018.
  */
 @SuppressWarnings("WeakerAccess")
@@ -26,36 +26,44 @@ public class SpaceSimulation extends Thread {
     private static final double POISSON_ERROR_MARGIN = 0.001;
 
     /** Conversion factors */
-    private static final double YEARS = 365.25;
-    private static final int YEARS_INT = (int) YEARS;
+    private static final int YEARS = 365; // in days
     private static final int NOF_TRACKED_OBJECTS = 38_700; // a few values are based on this
 
     /** average period for debris to fall into the atmosphere or outer space in days */
-    private static final double fallProbSmall = probSplit(300 / NOF_TRACKED_OBJECTS, YEARS_INT);
+    private static final double fallProbSmall = probSplit(300.0 / NOF_TRACKED_OBJECTS, YEARS);
     private static final double fallProbLarge = fallProbSmall;
     /** the number of particles a satellite creates when colliding */
     public static final double shreddingFactor = 10_000;
     /** the fraction of shredded particles that is smaller than 10 cm */
     public static final double shreddingSmallFraction = 0.75;
+    /** distributions for the shredding values */
+    private static final Distribution shreddingDistLarge =
+            new ExponentialDistribution(1.0 / (shreddingFactor * (1 - shreddingSmallFraction)));
+    private static final Distribution shreddingDistSmall =
+            new ExponentialDistribution(1.0 / (shreddingFactor * shreddingSmallFraction));
+
     /** max satellite launches per day */
-    public static final double launchesPerDay = 90 / YEARS;
+    public static final double launchesPerDay = 90.0 / YEARS;
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 1200;
     /** number of satellites that an observatory can resolve within 24 hours */
-    private static final double observatorySavesPerDay = 0.01;
+    private static final double observatorySavesPerDay = 0.25;
     public static final int observatoryCapacity = 2;
 
     /** number of hugh particles generated upon launching a new satellite */
     public static final int launchStages = 2;
     public static final int launchNewParticles = 100;
-
+    private static final Distribution launchPartDistLarge = new ExponentialDistribution(1.0 / launchNewParticles);
     /** chance that one small particle hits one large object in one day */
     // 12 avoidances per year: with 38_700 tracked particles and 19 satellites, we have 38_700 * 19 * p = 12
-    public static final double probDangerSmall = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEARS_INT);
+    public static final double probDangerSmall = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEARS);
     /** chance that one large particle hits one other large object (or sat) in one day */
     public static final double probDangerLarge = probDangerSmall * 4; // *4 because of surface
     /** average chance of collision when alarm is raised */
     private static final double collisionByDangerRisk = 1.0 / 50_000;
+    /** breakdown probability per satellite per day. */
+    // Even though this would result in an exponential breakdown, this holds when the number of satellites in orbit is constant
+    private final static double satBreakdownProb = probSplit(0.1, YEARS);
 
     /** particles [1 ... 10] cm */
     private long particlesSmall = 750_000;
@@ -75,6 +83,7 @@ public class SpaceSimulation extends Thread {
     public SpaceSimulation(int runTime) {
         results = new SpaceResults(runTime);
         maxTime = runTime - 1;
+
         results.addResults(particlesSmall, particlesLarge, particlesHugh, satellitesInOrbit);
     }
 
@@ -132,6 +141,7 @@ public class SpaceSimulation extends Thread {
         collSatWithLarge = sampleOptimized(obs.save(collSatWithLarge), collisionByDangerRisk);
         collSatWithSmall = sampleOptimized(obs.save(collSatWithSmall), collisionByDangerRisk);
 
+        // process effects of collisions
         satellitesInOrbit -= collSatWithHugh;
         particlesHugh -= collSatWithHugh;
         shredIntoParticles(collSatWithHugh * 2);
@@ -140,7 +150,6 @@ public class SpaceSimulation extends Thread {
         particlesHugh -= max(collHughWithHugh * 2, 0);
         shredIntoParticles(collHughWithHugh * 2);
 
-        // process effects of collisions
         particlesHugh -= collHughWithLarge;
         shredIntoParticles(collHughWithLarge);
 
@@ -152,6 +161,10 @@ public class SpaceSimulation extends Thread {
         particlesHugh += collSatWithSmall;
         results.addLostSatellites(collSatWithSmall);
 
+        int satBreakdown = sampleOptimized(this.satellitesInOrbit, satBreakdownProb);
+        satellitesInOrbit -= satBreakdown;
+        particlesHugh += satBreakdown;
+
         // particles falling back into the atmosphere
         particlesHugh -= sampleOptimized(particlesHugh, fallProbLarge);
         particlesLarge -= sampleOptimized(particlesLarge, fallProbSmall);
@@ -160,18 +173,20 @@ public class SpaceSimulation extends Thread {
         // launching new satellites
         daysUntilNextLaunch = max(0, daysUntilNextLaunch - 1);
         // could have been an if-statement, but this is more stable
-        while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
-            satellitesInOrbit++;
+        while (daysUntilNextLaunch < 1 && this.satellitesInOrbit < satellitesRequiredInOrbit) {
+            this.satellitesInOrbit++;
+            particlesHugh += launchStages;
+            particlesLarge += launchPartDistLarge.nextRandom();
             daysUntilNextLaunch += (1.0 / launchesPerDay);
-            particlesHugh += launchNewParticles;
-            particlesLarge += launchStages;
         }
     }
 
     /** produce and add small and large particles resulting from shredding satellites */
     private void shredIntoParticles(int nOfCollisions) {
-        particlesLarge += nOfCollisions * shreddingFactor * (1 - shreddingSmallFraction);
-        particlesSmall += nOfCollisions * shreddingFactor * shreddingSmallFraction;
+        for (int i = 0; i < nOfCollisions; i++) {
+            this.particlesLarge += shreddingDistLarge.nextRandom();
+            this.particlesSmall += shreddingDistSmall.nextRandom();
+        }
     }
 
     /** returns a sample of collisions */
@@ -201,6 +216,7 @@ public class SpaceSimulation extends Thread {
      * @return p such that n experiments of p have a chance t on at least one success; (1 - p)^n = (1 - t)
      */
     private static double probSplit(double totalProb, int repetitions) {
+        // the chance of (NOT t) is equal to the chance of (NOT p after n times) : (1 - t) = (1 - p)^n
         return 1 - Math.pow(1 - totalProb, 1.0 / repetitions);
     }
 

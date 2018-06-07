@@ -1,5 +1,9 @@
 package Simulation;
 
+import Results.MultiResultCollector;
+import Results.MultiSpaceResultImpl;
+import Results.MultiSpaceResults;
+
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +14,11 @@ import java.util.List;
 public class Main {
     /** number of simulations run */
     public static final int NOF_RUNS = 10;
-    /** number of days for one simulation */
-    public static final int MAX_TIME = 365 * 100;
     /** how many parallel threads may run at once */
     private static final int THREAD_POOL = 5;
+    private static final int MAX_YEARS = 20;
+    /** number of days for one simulation */
+    public static final int MAX_TIME = 365 * MAX_YEARS;
 
     // run NOF_RUNS simulations and save everything in a csv file
     public static void main(String[] args) throws Exception {
@@ -22,7 +27,7 @@ public class Main {
         long startTime = System.currentTimeMillis();
 
         List<SpaceSimulation> runs = new ArrayList<>(THREAD_POOL);
-        MultiSpaceResults results = new MultiSpaceResults(NOF_RUNS, MAX_TIME + 1);
+        MultiResultCollector collector = MultiSpaceResultImpl.getCollector(NOF_RUNS, MAX_TIME + 1);
         for (int i = 0; i < NOF_RUNS; i += THREAD_POOL) {
             System.out.printf("\rRunning: %d to %d of %d", i, Math.min(i + THREAD_POOL, NOF_RUNS), NOF_RUNS);
 
@@ -33,17 +38,17 @@ public class Main {
             }
 
             for (SpaceSimulation run : runs) {
-                results.add(run.results());
+                collector.add(run.results());
             }
 
             runs.clear();
         }
-        results.wrapUp();
+        MultiSpaceResults results = collector.wrapUp();
         System.out.println();
 
         System.out.println("Simulation time: " + (System.currentTimeMillis() - startTime) + " ms");
 
-        output.println(results.lostSatellitesMean() + " : " + results.lostSatellitesConf());
+        System.out.println("Mean lost satellites in " + MAX_YEARS + " years: " + results.lostSatellitesMean() + " " + results.lostSatellitesConf());
 
         long[] totals = results.totals();
         for (int i = 0; i < totals.length; i += 200) {
