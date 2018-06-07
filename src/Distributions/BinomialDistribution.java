@@ -1,10 +1,13 @@
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class BinomialDistribution extends Distribution {
 
     protected long nOfExperiments;      // Number of experiments
     protected double success;   // Success probability
     private BernoulliDistribution bernoulli;
+    private static final ThreadLocalRandom rand = ThreadLocalRandom.current();
 
     // A binomial rv is the sum of n Bernoulli rv's with parameter p
     public BinomialDistribution(long nOfExperiments, double success) {
@@ -39,7 +42,7 @@ public class BinomialDistribution extends Distribution {
     public static int get(long nOfExperiments, double success) {
         int sum = 0;
         for (int i = 0; i < nOfExperiments; i++) {
-            if (random.nextDouble() < success) sum++;
+            if (rand.nextDouble() < success) sum++;
         }
         return sum;
     }

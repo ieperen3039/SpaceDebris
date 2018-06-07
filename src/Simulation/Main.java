@@ -3,6 +3,7 @@ package Simulation;
 import Results.MultiResultCollector;
 import Results.MultiSpaceResults;
 import Results.MultiSpaceResultsImpl;
+import Results.ProgressBar;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -14,10 +15,10 @@ import java.util.Locale;
  */
 public class Main {
     /** number of simulations run */
-    public static final int NOF_RUNS = 10;
+    public static final int NOF_RUNS = 100;
     /** how many parallel threads may run at once */
-    private static final int THREAD_POOL = 3;
-    private static final int MAX_YEARS = 25;
+    private static final int THREAD_POOL = 10;
+    private static final int MAX_YEARS = 100;
     /** number of days for one simulation */
     public static final int MAX_TIME = 365 * MAX_YEARS;
 
@@ -25,12 +26,11 @@ public class Main {
     public static void main(String[] args) throws Exception {
         PrintWriter output = new PrintWriter("data.csv");
 //        PrintStream output = System.out;
-        long startTime = System.currentTimeMillis();
+        ProgressBar progress = new ProgressBar(NOF_RUNS);
 
         List<SpaceSimulation> runs = new ArrayList<>(THREAD_POOL);
         MultiResultCollector collector = MultiSpaceResultsImpl.getCollector(NOF_RUNS, MAX_TIME + 1);
         for (int i = 0; i < NOF_RUNS; i += THREAD_POOL) {
-            System.out.printf("\rRunning: %d to %d of %d", i, Math.min(i + THREAD_POOL, NOF_RUNS), NOF_RUNS);
 
             for (int j = 0; (j < THREAD_POOL) && (i + j < NOF_RUNS); j++) {
                 SpaceSimulation suite = new SpaceSimulation(MAX_TIME + 1);
@@ -40,31 +40,39 @@ public class Main {
 
             for (SpaceSimulation run : runs) {
                 collector.add(run.results());
+                progress.printUpdate();
+                System.out.flush();
             }
+
 
             runs.clear();
         }
-        System.out.println();
-        System.out.println("Simulation time: " + (System.currentTimeMillis() - startTime) + " ms\n");
+        System.out.print("\n\n");
 
         MultiSpaceResults results = collector.wrapUp();
-        System.out.println("Mean saves in " + MAX_YEARS + " years: " + results.savesMean() + " " + results.savesConf());
-        System.out.println("Mean lost satellites in " + MAX_YEARS + " years: " + results.lostSatellitesMean() + " " + results.lostSatellitesConf());
-
-        double[] totals = results.totals();
         double[] activeSats = results.getActiveSatellites();
         double[] launchQueue = results.getSpaceFlightsQueued();
-        double[] hughDebris = results.getTotalSatellites();
-        output.println("totals,activeSats,launchQueue,hughDebris");
+        double[] hughParticles = results.getHughParticles();
+        double[] largeParticles = results.getLargeParticles();
+        double[] smallParticles = results.getSmallParticles();
 
-        final int stepSize = (MAX_TIME / 5000) + 1;
-        for (int i = 0; i < totals.length; i += stepSize) {
+        System.out.printf("Mean saves in %d years: %1.03f %s%n", MAX_YEARS, results.savesMean(), results.savesConf());
+        System.out.printf("Mean lost satellites in %d years: %1.03f %s%n", MAX_YEARS, results.lostSatellitesMean(), results.lostSatellitesConf());
+        System.out.printf("Mean total particles after %d years: %1.03f",
+                MAX_TIME, hughParticles[MAX_TIME] + largeParticles[MAX_TIME] + smallParticles[MAX_TIME]
+        );
+
+        output.println("dayNr;activeSats;launchQueue;hughDebris;largeDebris;smallDebris");
+        final int stepSize = (MAX_TIME / 5000) + 1; // at most 5000 values
+        for (int i = 0; i < activeSats.length; i += stepSize) {
             output.printf(Locale.US,
-                    "%.03f,%.03f,%.03f,%.03f\n",
-                    totals[i],
+                    "%d;%.03f;%.03f;%.02f;%.02f;%.02f\n",
+                    i,
                     activeSats[i],
                     launchQueue[i],
-                    hughDebris[i]
+                    hughParticles[i],
+                    largeParticles[i],
+                    smallParticles[i]
             );
         }
         output.close();

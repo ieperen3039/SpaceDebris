@@ -1,5 +1,7 @@
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class NormalDistribution extends Distribution {
 
     protected double mu;
@@ -22,12 +24,12 @@ public class NormalDistribution extends Distribution {
 
     @Override
     public double nextRandom() {
-        double U = random.nextGaussian();
+        double U = ThreadLocalRandom.current().nextGaussian();
         return mu + sigma * U;
     }
 
     public static double get(double mu, double sigma) {
-        double U = random.nextGaussian();
+        double U = ThreadLocalRandom.current().nextGaussian();
         return mu + sigma * U;
     }
 }

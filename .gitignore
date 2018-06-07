@@ -3,3 +3,5 @@
 SpaceDebris.iml
 /out/
 data.csv
+.RData
+.Rhistory

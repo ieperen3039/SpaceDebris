@@ -1,5 +1,7 @@
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class UniformDistribution extends Distribution {
 
     protected double a; // lower bound
@@ -22,7 +24,7 @@ public class UniformDistribution extends Distribution {
 
     @Override
     public double nextRandom() {
-        double U = random.nextDouble();
+        double U = ThreadLocalRandom.current().nextDouble();
         return a + U * (b - a);
     }
 }

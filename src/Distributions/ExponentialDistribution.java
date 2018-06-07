@@ -6,6 +6,8 @@
 
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * @author mboon
  */
@@ -18,7 +20,7 @@ public class ExponentialDistribution extends Distribution {
     }
 
     public static double get(double lambda) {
-        double u = random.nextDouble();
+        double u = ThreadLocalRandom.current().nextDouble();
         return -Math.log(u) / lambda;
     }
 

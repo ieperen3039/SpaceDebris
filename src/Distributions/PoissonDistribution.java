@@ -1,7 +1,10 @@
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class PoissonDistribution extends Distribution {
 
+    private static final ThreadLocalRandom rand = ThreadLocalRandom.current();
     protected double lambda;
 
     public PoissonDistribution(double lambda) {
@@ -25,7 +28,7 @@ public class PoissonDistribution extends Distribution {
 
     public static int get(double lambda) {
         // Discrete inverse transform method
-        double U = random.nextDouble();
+        double U = rand.nextDouble();
         int index = 0;
         double current = Math.exp(-lambda);
         double sum = current;

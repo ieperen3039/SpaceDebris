@@ -1,7 +1,10 @@
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class BernoulliDistribution extends Distribution {
 
+    private final ThreadLocalRandom rand = ThreadLocalRandom.current();
     protected double success;  // Success probability
 
     public BernoulliDistribution(double success) {
@@ -24,7 +27,7 @@ public class BernoulliDistribution extends Distribution {
     }
 
     public boolean nextBoolean() {
-        return random.nextDouble() < success;
+        return rand.nextDouble() < success;
     }
 
     public int nextInt() {

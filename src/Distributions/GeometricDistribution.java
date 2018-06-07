@@ -1,5 +1,7 @@
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class GeometricDistribution extends Distribution {
 
     protected double p;   // Success probability
@@ -20,7 +22,7 @@ public class GeometricDistribution extends Distribution {
 
     @Override
     public double nextRandom() {
-        double U = random.nextDouble();
+        double U = ThreadLocalRandom.current().nextDouble();
         return 1 + Math.floor(Math.log(U) / Math.log(1 - p));
     }
 

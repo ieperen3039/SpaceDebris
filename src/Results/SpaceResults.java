@@ -9,10 +9,9 @@ public class SpaceResults {
     /** particles over time */
     private final long[] smallParticles;
     private final long[] largeParticles;
-    private final int[] satellitesInOrbit;
+    private final int[] hughParticles;
     private final int[] activeSatellites;
     private final int[] spaceFlightsQueued;
-    private final long[] totalParticles;
 
     private int lostSatellites = 0;
     private int index = 0;
@@ -22,18 +21,16 @@ public class SpaceResults {
         smallParticles = new long[nOfResults];
         largeParticles = new long[nOfResults];
         spaceFlightsQueued = new int[nOfResults];
-        satellitesInOrbit = new int[nOfResults];
+        hughParticles = new int[nOfResults];
         activeSatellites = new int[nOfResults];
-        totalParticles = new long[nOfResults];
     }
 
     public void addResults(long pSmall, long pLarge, int pHugh, int satsInOrbit) {
         smallParticles[index] = pSmall;
         largeParticles[index] = pLarge;
-        satellitesInOrbit[index] = pHugh + satsInOrbit;
+        hughParticles[index] = pHugh;
         activeSatellites[index] = satsInOrbit;
         spaceFlightsQueued[index] = SpaceSimulation.satellitesRequiredInOrbit - satsInOrbit;
-        totalParticles[index] = pSmall + pLarge + pHugh;
         index++;
     }
 
@@ -41,8 +38,8 @@ public class SpaceResults {
         lostSatellites += n;
     }
 
-    public void addSaves(int number) {
-        saves += number;
+    public void addSaves(int n) {
+        saves += n;
     }
 
     public long[] getLargeParticles() {
@@ -57,16 +54,12 @@ public class SpaceResults {
         return spaceFlightsQueued;
     }
 
-    public int[] getSatellitesInOrbit() {
-        return satellitesInOrbit;
+    public int[] getHughParticles() {
+        return hughParticles;
     }
 
     public int[] getActiveSatellites() {
         return activeSatellites;
-    }
-
-    public long[] getTotalParticles() {
-        return totalParticles;
     }
 
     public int getLostSatellites() {

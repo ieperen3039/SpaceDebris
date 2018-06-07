@@ -44,7 +44,7 @@ public class SpaceSimulation extends Thread {
             new ExponentialDistribution(1.0 / (shreddingFactor * shreddingSmallFraction));
 
     /** max satellite launches per day */
-    public static final double launchesPerDay = 1;//90.0 / YEARS;
+    public static final double launchesPerDay = 2 * 90.0 / YEARS;
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 1200;
     /** number of satellites that an observatory can resolve within 24 hours */
@@ -55,13 +55,11 @@ public class SpaceSimulation extends Thread {
     public static final int launchStages = 2;
     public static final int launchNewParticles = 100;
     private static final Distribution launchPartDistLarge = new ExponentialDistribution(1.0 / launchNewParticles);
-    /** chance that one small particle hits one large object in one day */
+    /** probability of a dangerous situation per satellite - particle pair per day */
     // 12 avoidances per year: with 38_700 tracked particles and 19 satellites, we have 38_700 * 19 * p = 12
-    public static final double probDangerSmall = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEARS);
-    /** chance that one large particle hits one other large object (or sat) in one day */
-    public static final double probDangerLarge = probDangerSmall * 4; // *4 because of surface
+    private static final double probDangerPerParticle = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEARS);
     /** average chance of collision when alarm is raised */
-    private static final double collisionByDangerRisk = 1.0 / 50_000;
+    private static final double collisionByDangerRisk = 1.0 / 25_000;
     /** breakdown probability per satellite per day. */
     // Even though this would result in an exponential breakdown, this holds when the number of satellites in orbit is constant
     private final static double satBreakdownProb = probSplit(0.1, YEARS);
@@ -128,11 +126,11 @@ public class SpaceSimulation extends Thread {
      */
     private void progressOneDay(Observatory obs) {
         // different types of collisions
-        int collSatWithHugh = sampleOptimized((long) particlesHugh * satellitesInOrbit, probDangerLarge);
-        int collSatWithLarge = sampleOptimized(particlesLarge * satellitesInOrbit, probDangerSmall);
-        int collSatWithSmall = sampleOptimized(particlesSmall * satellitesInOrbit, probDangerSmall);
-        int collHughWithLarge = sampleOptimized(particlesLarge * particlesHugh, probDangerSmall * collisionByDangerRisk);
-        int collHughWithHugh = sampleOptimized((long) particlesHugh * (particlesHugh - 1), probDangerLarge * collisionByDangerRisk);
+        int collSatWithHugh = sampleOptimized((long) particlesHugh * satellitesInOrbit, probDangerPerParticle);
+        int collSatWithLarge = sampleOptimized(particlesLarge * satellitesInOrbit, probDangerPerParticle);
+        int collSatWithSmall = sampleOptimized(particlesSmall * satellitesInOrbit, probDangerPerParticle);
+        int collHughWithLarge = sampleOptimized(particlesLarge * particlesHugh, probDangerPerParticle * collisionByDangerRisk);
+        int collHughWithHugh = sampleOptimized((long) particlesHugh * (particlesHugh - 1), probDangerPerParticle * collisionByDangerRisk);
 
         // it may theoretically happen for three sats to collide, but then the collision chance should be adjusted
         collHughWithHugh = min(particlesHugh, collHughWithHugh * 2);

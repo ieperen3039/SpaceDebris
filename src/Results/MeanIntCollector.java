@@ -20,7 +20,8 @@ public class MeanIntCollector {
 
     public Interval getConfidence() {
         double mean = getMean();
-        double variance = secondMoment - (mean * mean);
+        double msm = (double) secondMoment / nOf;
+        double variance = msm - (mean * mean);
         return new Interval(mean, variance, nOf);
     }
 }

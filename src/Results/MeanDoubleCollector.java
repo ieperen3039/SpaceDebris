@@ -20,6 +20,7 @@ public class MeanDoubleCollector {
 
     public Interval getConfidence() {
         double mean = getMean();
+        double secondMoment = this.secondMoment / nOf;
         double variance = secondMoment - mean * mean;
         return new Interval(mean, variance, nOf);
     }

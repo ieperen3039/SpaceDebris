@@ -1,5 +1,7 @@
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class DiscreteUniformDistribution extends Distribution {
 
     protected int m; // lower bound
@@ -22,7 +24,7 @@ public class DiscreteUniformDistribution extends Distribution {
 
     @Override
     public double nextRandom() {
-        double U = random.nextDouble();
+        double U = ThreadLocalRandom.current().nextDouble();
         return m + Math.floor((n - m + 1) * U);
     }
 

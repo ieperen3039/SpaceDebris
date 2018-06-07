@@ -6,11 +6,14 @@
 
 package Distributions;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * @author mboon
  */
 public class GammaDistribution extends Distribution {
 
+    private final ThreadLocalRandom rand = ThreadLocalRandom.current();
     protected double alpha, beta;
 
     public GammaDistribution(double alpha, double beta) {
@@ -36,7 +39,7 @@ public class GammaDistribution extends Distribution {
 
             while (true) {
                 // Step 1:
-                final double u = random.nextDouble();
+                final double u = rand.nextDouble();
                 final double bGS = 1 + shape / Math.E;
                 final double p = bGS * u;
 
@@ -44,7 +47,7 @@ public class GammaDistribution extends Distribution {
                     // Step 2:
 
                     final double x = Math.pow(p, 1 / shape);
-                    final double u2 = random.nextDouble();
+                    final double u2 = rand.nextDouble();
 
                     if (u2 <= Math.exp(-x)) {
                         return scale * x;
@@ -54,7 +57,7 @@ public class GammaDistribution extends Distribution {
                     // Step 3:
 
                     final double x = -1 * Math.log((bGS - p) / shape);
-                    final double u2 = random.nextDouble();
+                    final double u2 = rand.nextDouble();
 
                     if (u2 <= Math.pow(x, shape - 1)) {
                         return scale * x;
@@ -69,7 +72,7 @@ public class GammaDistribution extends Distribution {
         final double c = 1 / (3 * Math.sqrt(d));
 
         while (true) {
-            final double x = random.nextGaussian();
+            final double x = rand.nextGaussian();
             final double v = (1 + c * x) * (1 + c * x) * (1 + c * x);
 
             if (v <= 0) {
@@ -77,7 +80,7 @@ public class GammaDistribution extends Distribution {
             }
 
             final double x2 = x * x;
-            final double u = random.nextDouble();
+            final double u = rand.nextDouble();
 
             // Squeeze
             if (u < 1 - 0.0331 * x2 * x2) {

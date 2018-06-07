@@ -4,7 +4,6 @@ package Results;
  * @author Geert van Ieperen created on 7-6-2018.
  */
 public interface MultiSpaceResults {
-    double[] totals();
 
     Interval lostSatellitesConf();
 
@@ -18,5 +17,9 @@ public interface MultiSpaceResults {
 
     double[] getSpaceFlightsQueued();
 
-    double[] getTotalSatellites();
+    double[] getHughParticles();
+
+    double[] getLargeParticles();
+
+    double[] getSmallParticles();
 }

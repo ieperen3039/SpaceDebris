@@ -9,21 +9,22 @@ public class MultiSpaceResultsImpl implements MultiSpaceResults, MultiResultColl
     private MeanIntCollector esaSaves;
     private boolean isWrappedUp = false;
 
-    private double[] meanParticles;
     private double[] activeSatellites;
     private double[] spaceFlightsQueued;
-    private double[] totalSatellites;
-
+    private double[] smallParticles;
+    private double[] largeParticles;
+    private double[] hughParticles;
 
     private MultiSpaceResultsImpl(int runs, int runLength) {
         if (runs == 0 || runLength == 0)
             throw new IllegalArgumentException("runs = " + runs + ", length = " + runLength);
         this.nOfRuns = runs;
 
-        meanParticles = new double[runLength];
         activeSatellites = new double[runLength];
         spaceFlightsQueued = new double[runLength];
-        totalSatellites = new double[runLength];
+        hughParticles = new double[runLength];
+        smallParticles = new double[runLength];
+        largeParticles = new double[runLength];
         lostSatellites = new MeanIntCollector();
         esaSaves = new MeanIntCollector();
     }
@@ -36,30 +37,27 @@ public class MultiSpaceResultsImpl implements MultiSpaceResults, MultiResultColl
     public synchronized void add(SpaceResults results) {
         lostSatellites.add(results.getLostSatellites());
         esaSaves.add(results.getSaves());
-        addAll(results.getTotalParticles(), meanParticles);
         addAll(results.getActiveSatellites(), activeSatellites);
         addAll(results.getSpaceFlightsQueued(), spaceFlightsQueued);
-        addAll(results.getSatellitesInOrbit(), totalSatellites);
+        addAll(results.getHughParticles(), hughParticles);
+        addAll(results.getSmallParticles(), smallParticles);
+        addAll(results.getLargeParticles(), largeParticles);
     }
 
     @Override
     public MultiSpaceResults wrapUp() {
         if (isWrappedUp) throw new IllegalStateException("wrapUp is called twice"); // not threadsafe
 
-        for (int i = 0; i < meanParticles.length; i++) {
-            meanParticles[i] /= nOfRuns;
+        for (int i = 0; i < activeSatellites.length; i++) {
             activeSatellites[i] /= nOfRuns;
             spaceFlightsQueued[i] /= nOfRuns;
-            totalSatellites[i] /= nOfRuns;
+            hughParticles[i] /= nOfRuns;
+            largeParticles[i] /= nOfRuns;
+            smallParticles[i] /= nOfRuns;
         }
 
         isWrappedUp = true;
         return this;
-    }
-
-    @Override
-    public double[] totals() {
-        return meanParticles;
     }
 
     @Override
@@ -93,8 +91,18 @@ public class MultiSpaceResultsImpl implements MultiSpaceResults, MultiResultColl
     }
 
     @Override
-    public double[] getTotalSatellites() {
-        return totalSatellites;
+    public double[] getHughParticles() {
+        return hughParticles;
+    }
+
+    @Override
+    public double[] getLargeParticles() {
+        return largeParticles;
+    }
+
+    @Override
+    public double[] getSmallParticles() {
+        return smallParticles;
     }
 
 

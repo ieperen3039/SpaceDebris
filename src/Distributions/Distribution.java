@@ -1,13 +1,11 @@
 package Distributions;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * @author mboon
  */
 public abstract class Distribution {
-
-    protected final static Random random = new Random();
 
     public abstract double expectation();
 
@@ -24,7 +22,8 @@ public abstract class Distribution {
         int base = (int) value;
 
         value -= base;
-        if (random.nextDouble() < value) base++;
+        ThreadLocalRandom rand = ThreadLocalRandom.current();
+        if (rand.nextDouble() < value) base++;
 
         return base;
     }
