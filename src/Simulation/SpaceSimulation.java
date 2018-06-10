@@ -22,25 +22,25 @@ import static java.lang.Math.min;
 @SuppressWarnings("WeakerAccess")
 public class SpaceSimulation extends Thread {
     /** If this is false, poisson distributions may be used for collisions */
-    private static final boolean FORCE_NORMAL_DIST = false;
+    public static final boolean FORCE_NORMAL_DIST = false;
     /** if the error resulting from assuming poisson at binomials falls below this margin, poisson is used instead */
-    private static final double POISSON_ERROR_MARGIN = 0.001;
+    public static final double POISSON_ERROR_MARGIN = 0.001;
 
     /** Conversion factors */
-    private static final int YEARS = 365; // in days
-    private static final int NOF_TRACKED_OBJECTS = 38_700; // a few values are based on this
+    public static final int YEARS = 365; // in days
+    public static final int NOF_TRACKED_OBJECTS = 38_700; // a few values are based on this
 
     /** average period for debris to fall into the atmosphere or outer space in days */
-    private static final double fallProbSmall = probSplit(300.0 / NOF_TRACKED_OBJECTS, YEARS);
-    private static final double fallProbLarge = fallProbSmall;
+    public static final double fallProbSmall = probSplit(300.0 / NOF_TRACKED_OBJECTS, YEARS);
+    public static final double fallProbLarge = fallProbSmall;
     /** the number of particles a satellite creates when colliding */
     public static final double shreddingFactor = 10_000;
     /** the fraction of shredded particles that is smaller than 10 cm */
     public static final double shreddingSmallFraction = 0.75;
     /** distributions for the shredding values */
-    private static final Distribution shreddingDistLarge =
+    public static final Distribution shreddingDistLarge =
             new ExponentialDistribution(1.0 / (shreddingFactor * (1 - shreddingSmallFraction)));
-    private static final Distribution shreddingDistSmall =
+    public static final Distribution shreddingDistSmall =
             new ExponentialDistribution(1.0 / (shreddingFactor * shreddingSmallFraction));
 
     /** max satellite launches per day */
@@ -48,21 +48,20 @@ public class SpaceSimulation extends Thread {
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 1200;
     /** number of satellites that an observatory can resolve within 24 hours */
-    private static final double observatorySavesPerDay = 0.25;
+    public static final double observatorySavesPerDay = 0.25;
     public static final int observatoryCapacity = 2;
 
     /** number of hugh particles generated upon launching a new satellite */
     public static final int launchStages = 2;
-    public static final int launchNewParticles = 100;
-    private static final Distribution launchPartDistLarge = new ExponentialDistribution(1.0 / launchNewParticles);
+    public static final Distribution launchPartDistLarge = new ExponentialDistribution(1.0 / 50);
     /** probability of a dangerous situation per satellite - particle pair per day */
     // 12 avoidances per year: with 38_700 tracked particles and 19 satellites, we have 38_700 * 19 * p = 12
-    private static final double probDangerPerParticle = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEARS);
+    public static final double probDangerPerParticle = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEARS);
     /** average chance of collision when alarm is raised */
-    private static final double collisionByDangerRisk = 1.0 / 25_000;
+    public static final double collisionByDangerRisk = 1.0 / 25_000;
     /** breakdown probability per satellite per day. */
     // Even though this would result in an exponential breakdown, this holds when the number of satellites in orbit is constant
-    private final static double satBreakdownProb = probSplit(0.1, YEARS);
+    public final static double satBreakdownProb = probSplit(0.1, YEARS);
 
     /** particles [1 ... 10] cm */
     private long particlesSmall = 750_000;
@@ -97,7 +96,7 @@ public class SpaceSimulation extends Thread {
 
             if (satellitesInOrbit < 0 || particlesSmall < 0 || particlesLarge < 0 || particlesHugh < 0) {
                 throw new IllegalStateException(String.format(
-                        "negative amount detected after %d days:\n" +
+                        "Negative amount detected after %d days:\n" +
                                 "sat in orbit: %d\n" +
                                 "hugh particles: %d\n" +
                                 "large particles: %d\n" +

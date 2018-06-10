@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static Simulation.SpaceSimulation.YEARS;
+
 /**
  * @author Geert van Ieperen created on 4-6-2018.
  */
@@ -20,7 +22,7 @@ public class Main {
     private static final int THREAD_POOL = 10;
     private static final int MAX_YEARS = 100;
     /** number of days for one simulation */
-    public static final int MAX_TIME = 365 * MAX_YEARS;
+    public static final int MAX_TIME = MAX_YEARS * YEARS;
 
     // run NOF_RUNS simulations and save everything in a csv file
     public static void main(String[] args) throws Exception {
@@ -43,7 +45,6 @@ public class Main {
                 progress.printUpdate();
                 System.out.flush();
             }
-
 
             runs.clear();
         }
