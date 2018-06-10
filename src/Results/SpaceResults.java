@@ -18,6 +18,8 @@ public class SpaceResults {
     private int index = 0;
     private int saves = 0;
 
+    private int removalLaunch = 0;
+
     public SpaceResults(int nOfResults) {
         smallParticles = new long[nOfResults];
         largeParticles = new long[nOfResults];
@@ -34,8 +36,6 @@ public class SpaceResults {
         activeSatellites[index] = satsInOrbit;
         spaceFlightsQueued[index] = SpaceSimulation.satellitesRequiredInOrbit - satsInOrbit;
         index++;
-
-        lostSatellites[index] = 0;
     }
 
     public void addLostSatellites(int n) {
@@ -77,5 +77,13 @@ public class SpaceResults {
 
     public int getSaves() {
         return saves;
+    }
+
+    public void addRemovalLaunch() {
+        removalLaunch++;
+    }
+
+    public int getRemovalLaunch() {
+        return removalLaunch;
     }
 }

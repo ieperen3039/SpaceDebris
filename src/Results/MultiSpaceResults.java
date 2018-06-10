@@ -36,4 +36,6 @@ public interface MultiSpaceResults {
     double[] getSmallParticles();
 
     double[] getLostSatellites();
+
+    MeanDoubleCollector getRemovalLaunches();
 }

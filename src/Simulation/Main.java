@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static Simulation.SpaceSimulation.YEARS;
+import static Simulation.SpaceSimulation.YEAR;
 
 /**
  * @author Geert van Ieperen created on 4-6-2018.
@@ -19,7 +19,7 @@ public class Main {
     private static final int THREAD_POOL = 10;
     private static final int MAX_YEARS = 100;
     /** number of days for one simulation */
-    public static final int MAX_TIME = MAX_YEARS * YEARS;
+    public static final int MAX_TIME = MAX_YEARS * YEAR;
 
     // run NOF_RUNS simulations and save everything in a csv file
     public static void main(String[] args) throws Exception {
@@ -54,12 +54,14 @@ public class Main {
         double[] largeParticles = results.getLargeParticles();
         double[] smallParticles = results.getSmallParticles();
         double[] lostSatellites = results.getLostSatellites();
+        MeanDoubleCollector rl = results.getRemovalLaunches();
 
         System.out.printf(Locale.US, "Mean saves in %d years: %1.01f %s%n", MAX_YEARS, results.savesMean(), results.savesConf());
         System.out.printf(Locale.US, "Mean lost satellites in %d years: %1.03f %s%n", MAX_YEARS, results.lostSatellitesMean(), results.lostSatellitesConf());
         System.out.printf(Locale.US, "Small particles: %1.01f %s%n", results.smallParticleMean(), results.smallParticleConf());
         System.out.printf(Locale.US, "Large particles: %1.01f %s%n", results.largeParticleMean(), results.largeParticleConf());
         System.out.printf(Locale.US, "Hugh particles: %1.01f %s%n", results.hughParticleMean(), results.hughParticleConf());
+        System.out.printf(Locale.US, "Number of removal launches: %1.03f %s%n", rl.getMean(), rl.getConfidence());
 
         System.out.printf(Locale.US, "Mean total particles after %d years: %1.00f",
                 MAX_YEARS, hughParticles[MAX_TIME] + largeParticles[MAX_TIME] + smallParticles[MAX_TIME]

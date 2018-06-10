@@ -27,14 +27,14 @@ public class SpaceSimulation extends Thread {
     public static final double POISSON_ERROR_MARGIN = 0.001;
 
     /** Conversion factors */
-    public static final int YEARS = 365; // in days
+    public static final int YEAR = 365; // in days
     public static final int NOF_TRACKED_OBJECTS = 38_700; // a few values are based on this
 
     /** number of satellites that we want in the sky */
     public static final int satellitesRequiredInOrbit = 1200;
 
     /** average period for debris to fall into the atmosphere or outer space in days */
-    public static final double fallProbSmall = probSplit(300.0 / NOF_TRACKED_OBJECTS, YEARS);
+    public static final double fallProbSmall = probSplit(300.0 / NOF_TRACKED_OBJECTS, YEAR);
     public static final double fallProbLarge = fallProbSmall;
     /** the number of particles a satellite creates when colliding */
     public static final double shreddingFactor = 10_000;
@@ -51,23 +51,23 @@ public class SpaceSimulation extends Thread {
     public static final Distribution launchPartDistLarge = new ExponentialDistribution(1.0 / 50);
     /** probability of a dangerous situation per satellite - particle pair per day */
     // 12 avoidances per year: with 38_700 tracked particles and 19 satellites, we have 38_700 * 19 * p = 12
-    public static final double probDangerPerParticle = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEARS);
+    public static final double probDangerPerParticle = probSplit(12.0 / (19 * NOF_TRACKED_OBJECTS), YEAR);
     /** average chance of collision when alarm is raised */
     public static final double collisionByDangerRisk = 1.0 / 25_000;
     /** breakdown probability per satellite per day. */
     // Even though this would result in an exponential breakdown, this holds when the number of satellites in orbit is constant
-    public final static double satBreakdownProb = probSplit(0.1, YEARS);
+    public final static double satBreakdownProb = probSplit(0.1, YEAR);
 
     /** max satellite launches per day */
-    public static final double launchesPerDay = 2 * 90.0 / YEARS;
+    public static final double launchesPerDay = 2 * 90.0 / YEAR;
     /** number of satellites that an observatory can resolve within 24 hours */
     public static final double observatoryCapacity = 0.25;
     // the ESA has 19 satellites by itself
     public static final int nOfObservatories = satellitesRequiredInOrbit / 19;
     public static final double observatorySavesPerDay = nOfObservatories * observatoryCapacity;
 
-    public static final int removalSatellitesRequired = 100;
-    public static final double removalsPerSatPerDay = 0.5;
+    public static final int removalSatellitesRequired = 20;
+    public static final double removalsPerSatPerDay = 25.0 / YEAR;
     public static final int removalCharges = 20;
     public static final Distribution removalRecharge = new ExponentialDistribution(removalsPerSatPerDay);
 
@@ -187,12 +187,9 @@ public class SpaceSimulation extends Thread {
             if (removalDaysUntilNext[i] < 0) {
                 if (particlesHugh > 0) {
                     particlesHugh--;
-
-                } else if (particlesLarge > 0) {
-                    particlesLarge--;
+                    removalChargesLeft[i]--;
                 }
 
-                removalChargesLeft[i]--;
                 removalDaysUntilNext[i] += removalRecharge.nextRandom();
             }
         }
@@ -202,9 +199,11 @@ public class SpaceSimulation extends Thread {
 
         // launch new removal satellites
         for (int i = 0; i < removalSatellitesRequired; i++) {
-            if (daysUntilNextLaunch >= 1 || satellitesInOrbit >= satellitesRequiredInOrbit) break;
+            if (daysUntilNextLaunch >= 1) break;
 
             if (removalChargesLeft[i] <= 0) {
+                results.addLostSatellites(1);
+                results.addRemovalLaunch();
                 particlesHugh += launchStages;
                 particlesLarge += launchPartDistLarge.nextRandom();
                 daysUntilNextLaunch += (1.0 / launchesPerDay);
@@ -215,7 +214,7 @@ public class SpaceSimulation extends Thread {
 
         // could have been an if-statement, but this is more stable
         while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
-            this.satellitesInOrbit++;
+            satellitesInOrbit++;
             particlesHugh += launchStages;
             particlesLarge += launchPartDistLarge.nextRandom();
             daysUntilNextLaunch += (1.0 / launchesPerDay);

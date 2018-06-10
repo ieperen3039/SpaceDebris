@@ -14,6 +14,8 @@ public class MultiSpaceResultsImpl implements MultiSpaceResults, MultiResultColl
     private MeanDoubleCollector largeTotal;
     private MeanDoubleCollector hughTotal;
 
+    private MeanDoubleCollector removalLaunches;
+
     private double[] activeSatellites;
     private double[] spaceFlightsQueued;
     private double[] smallParticles;
@@ -32,6 +34,7 @@ public class MultiSpaceResultsImpl implements MultiSpaceResults, MultiResultColl
         smallTotal = new MeanDoubleCollector();
         largeTotal = new MeanDoubleCollector();
         hughTotal = new MeanDoubleCollector();
+        removalLaunches = new MeanDoubleCollector();
 
         activeSatellites = new double[runLength];
         spaceFlightsQueued = new double[runLength];
@@ -52,6 +55,7 @@ public class MultiSpaceResultsImpl implements MultiSpaceResults, MultiResultColl
         smallTotal.add(results.getSmallParticles()[runLength - 1]);
         largeTotal.add(results.getLargeParticles()[runLength - 1]);
         hughTotal.add(results.getHughParticles()[runLength - 1]);
+        removalLaunches.add(results.getRemovalLaunch());
 
         addAll(results.getLostSatellites(), lostSatellites);
         addAll(results.getActiveSatellites(), activeSatellites);
@@ -170,6 +174,12 @@ public class MultiSpaceResultsImpl implements MultiSpaceResults, MultiResultColl
         for (int k = 0; k < runLength; k++) {
             total[k] += source[k];
         }
+    }
+
+
+    @Override
+    public MeanDoubleCollector getRemovalLaunches() {
+        return removalLaunches;
     }
 
 }
