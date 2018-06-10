@@ -1,9 +1,6 @@
 package Simulation;
 
-import Results.MultiResultCollector;
-import Results.MultiSpaceResults;
-import Results.MultiSpaceResultsImpl;
-import Results.ProgressBar;
+import Results.*;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -17,10 +14,10 @@ import static Simulation.SpaceSimulation.YEARS;
  */
 public class Main {
     /** number of simulations run */
-    public static final int NOF_RUNS = 5;
+    public static final int NOF_RUNS = 500;
     /** how many parallel threads may run at once */
     private static final int THREAD_POOL = 10;
-    private static final int MAX_YEARS = 1;
+    private static final int MAX_YEARS = 100;
     /** number of days for one simulation */
     public static final int MAX_TIME = MAX_YEARS * YEARS;
 
@@ -41,9 +38,9 @@ public class Main {
             }
 
             for (SpaceSimulation run : runs) {
-                collector.add(run.results());
+                SpaceResults results = run.results();
+                collector.add(results);
                 progress.printUpdate();
-                System.out.flush();
             }
 
             runs.clear();
@@ -56,24 +53,30 @@ public class Main {
         double[] hughParticles = results.getHughParticles();
         double[] largeParticles = results.getLargeParticles();
         double[] smallParticles = results.getSmallParticles();
+        double[] lostSatellites = results.getLostSatellites();
 
-        System.out.printf("Mean saves in %d years: %1.03f %s%n", MAX_YEARS, results.savesMean(), results.savesConf());
-        System.out.printf("Mean lost satellites in %d years: %1.03f %s%n", MAX_YEARS, results.lostSatellitesMean(), results.lostSatellitesConf());
-        System.out.printf("Mean total particles after %d years: %1.03f",
+        System.out.printf(Locale.US, "Mean saves in %d years: %1.01f %s%n", MAX_YEARS, results.savesMean(), results.savesConf());
+        System.out.printf(Locale.US, "Mean lost satellites in %d years: %1.03f %s%n", MAX_YEARS, results.lostSatellitesMean(), results.lostSatellitesConf());
+        System.out.printf(Locale.US, "Small particles: %1.01f %s%n", results.smallParticleMean(), results.smallParticleConf());
+        System.out.printf(Locale.US, "Large particles: %1.01f %s%n", results.largeParticleMean(), results.largeParticleConf());
+        System.out.printf(Locale.US, "Hugh particles: %1.01f %s%n", results.hughParticleMean(), results.hughParticleConf());
+
+        System.out.printf(Locale.US, "Mean total particles after %d years: %1.00f",
                 MAX_YEARS, hughParticles[MAX_TIME] + largeParticles[MAX_TIME] + smallParticles[MAX_TIME]
         );
 
-        output.println("dayNr;activeSats;launchQueue;hughDebris;largeDebris;smallDebris");
+        output.println("dayNr;activeSats;launchQueue;hughDebris;largeDebris;smallDebris;lostSatellites");
         final int stepSize = (MAX_TIME / 5000) + 1; // at most 5000 values
         for (int i = 0; i < activeSats.length; i += stepSize) {
             output.printf(Locale.US,
-                    "%d;%.03f;%.03f;%.02f;%.02f;%.02f\n",
+                    "%d;%.03f;%.04f;%.02f;%.02f;%.02f;%.05f\n",
                     i,
                     activeSats[i],
                     launchQueue[i],
                     hughParticles[i],
                     largeParticles[i],
-                    smallParticles[i]
+                    smallParticles[i],
+                    lostSatellites[i]
             );
         }
         output.close();

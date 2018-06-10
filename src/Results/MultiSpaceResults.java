@@ -13,6 +13,18 @@ public interface MultiSpaceResults {
 
     Interval savesConf();
 
+    double smallParticleMean();
+
+    Interval smallParticleConf();
+
+    double largeParticleMean();
+
+    Interval largeParticleConf();
+
+    double hughParticleMean();
+
+    Interval hughParticleConf();
+
     double[] getActiveSatellites();
 
     double[] getSpaceFlightsQueued();
@@ -22,4 +34,6 @@ public interface MultiSpaceResults {
     double[] getLargeParticles();
 
     double[] getSmallParticles();
+
+    double[] getLostSatellites();
 }

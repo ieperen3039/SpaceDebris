@@ -162,7 +162,7 @@ public class SpaceSimulation extends Thread {
         particlesHugh += collSatWithSmall;
         results.addLostSatellites(collSatWithSmall);
 
-        int satBreakdown = sampleOptimized(this.satellitesInOrbit, satBreakdownProb);
+        int satBreakdown = sampleOptimized(satellitesInOrbit, satBreakdownProb);
         satellitesInOrbit -= satBreakdown;
         particlesHugh += satBreakdown;
 

@@ -6,7 +6,7 @@ package Results;
 public class MeanIntCollector {
     private int total = 0;
     private int secondMoment = 0;
-    private int nOf = 0;
+    private double nOf = 0;
 
     public void add(int newValue) {
         total += newValue;
@@ -15,13 +15,13 @@ public class MeanIntCollector {
     }
 
     public double getMean() {
-        return (double) total / nOf;
+        return total / nOf;
     }
 
     public Interval getConfidence() {
         double mean = getMean();
-        double msm = (double) secondMoment / nOf;
+        double msm = secondMoment / nOf;
         double variance = msm - (mean * mean);
-        return new Interval(mean, variance, nOf);
+        return new Interval(mean, variance, (int) nOf);
     }
 }

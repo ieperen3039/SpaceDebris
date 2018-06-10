@@ -12,8 +12,9 @@ public class SpaceResults {
     private final int[] hughParticles;
     private final int[] activeSatellites;
     private final int[] spaceFlightsQueued;
+    private final int[] lostSatellites;
 
-    private int lostSatellites = 0;
+    private int nOfLostSatellites = 0;
     private int index = 0;
     private int saves = 0;
 
@@ -23,6 +24,7 @@ public class SpaceResults {
         spaceFlightsQueued = new int[nOfResults];
         hughParticles = new int[nOfResults];
         activeSatellites = new int[nOfResults];
+        lostSatellites = new int[nOfResults];
     }
 
     public void addResults(long pSmall, long pLarge, int pHugh, int satsInOrbit) {
@@ -32,10 +34,13 @@ public class SpaceResults {
         activeSatellites[index] = satsInOrbit;
         spaceFlightsQueued[index] = SpaceSimulation.satellitesRequiredInOrbit - satsInOrbit;
         index++;
+
+        lostSatellites[index] = 0;
     }
 
     public void addLostSatellites(int n) {
-        lostSatellites += n;
+        nOfLostSatellites += n;
+        lostSatellites[index] += n;
     }
 
     public void addSaves(int n) {
@@ -62,7 +67,11 @@ public class SpaceResults {
         return activeSatellites;
     }
 
-    public int getLostSatellites() {
+    public int getNumberOfLostSatellites() {
+        return nOfLostSatellites;
+    }
+
+    public int[] getLostSatellites() {
         return lostSatellites;
     }
 

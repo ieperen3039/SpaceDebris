@@ -24,5 +24,6 @@ public class ProgressBar {
         System.out.printf("\rRunning time: %3d sec | Avg time per update: %6.02f ms | Progress: %4.1f%% | Time remaining: %3d sec",
                 (int) dt / 1000, tps, (i * 100.0) / total, msLeft / 1000
         );
+        System.out.flush();
     }
 }
