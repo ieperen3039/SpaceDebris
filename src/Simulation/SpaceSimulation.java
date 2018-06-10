@@ -31,7 +31,7 @@ public class SpaceSimulation extends Thread {
     public static final int NOF_TRACKED_OBJECTS = 38_700; // a few values are based on this
 
     /** number of satellites that we want in the sky */
-    public static final int satellitesRequiredInOrbit = 400;
+    public static final int satellitesRequiredInOrbit = 1200;
 
     /** average period for debris to fall into the atmosphere or outer space in days */
     public static final double fallProbSmall = probSplit(300.0 / NOF_TRACKED_OBJECTS, YEARS);
