@@ -66,6 +66,14 @@ public class SpaceSimulation extends Thread {
     public static final int nOfObservatories = satellitesRequiredInOrbit / 19;
     public static final double observatorySavesPerDay = nOfObservatories * observatoryCapacity;
 
+    public static final int removalSatellitesRequired = 100;
+    public static final double removalsPerSatPerDay = 0.5;
+    public static final int removalCharges = 20;
+    public static final Distribution removalRecharge = new ExponentialDistribution(removalsPerSatPerDay);
+
+    private int[] removalChargesLeft = new int[removalSatellitesRequired];
+    private double[] removalDaysUntilNext = new double[removalSatellitesRequired];
+
     /** particles [1 ... 10] cm */
     private long particlesSmall = 750_000;
     /** particles > 10 cm */
@@ -171,10 +179,42 @@ public class SpaceSimulation extends Thread {
         particlesLarge -= sampleOptimized(particlesLarge, fallProbSmall);
         particlesSmall -= sampleOptimized(particlesSmall, fallProbSmall);
 
+        // active removal process
+        for (int i = 0; i < removalSatellitesRequired; i++) {
+            if (removalChargesLeft[i] <= 0) continue;
+            removalDaysUntilNext[i]--;
+
+            if (removalDaysUntilNext[i] < 0) {
+                if (particlesHugh > 0) {
+                    particlesHugh--;
+
+                } else if (particlesLarge > 0) {
+                    particlesLarge--;
+                }
+
+                removalChargesLeft[i]--;
+                removalDaysUntilNext[i] += removalRecharge.nextRandom();
+            }
+        }
+
         // launching new satellites
         daysUntilNextLaunch = max(0, daysUntilNextLaunch - 1);
+
+        // launch new removal satellites
+        for (int i = 0; i < removalSatellitesRequired; i++) {
+            if (daysUntilNextLaunch >= 1 || satellitesInOrbit >= satellitesRequiredInOrbit) break;
+
+            if (removalChargesLeft[i] <= 0) {
+                particlesHugh += launchStages;
+                particlesLarge += launchPartDistLarge.nextRandom();
+                daysUntilNextLaunch += (1.0 / launchesPerDay);
+                removalDaysUntilNext[i] = removalRecharge.nextRandom();
+                removalChargesLeft[i] = removalCharges;
+            }
+        }
+
         // could have been an if-statement, but this is more stable
-        while (daysUntilNextLaunch < 1 && this.satellitesInOrbit < satellitesRequiredInOrbit) {
+        while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
             this.satellitesInOrbit++;
             particlesHugh += launchStages;
             particlesLarge += launchPartDistLarge.nextRandom();
