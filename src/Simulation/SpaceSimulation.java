@@ -130,7 +130,7 @@ public class SpaceSimulation extends Thread {
         // different types of collisions
         int collSatWithHugh = sampleOptimized((long) particlesHugh * satellitesInOrbit, probDangerPerParticle);
         int collSatWithLarge = sampleOptimized(particlesLarge * satellitesInOrbit, probDangerPerParticle);
-        int collSatWithSmall = sampleOptimized(particlesSmall * satellitesInOrbit, probDangerPerParticle);
+        int collSatWithSmall = 0;
         int collHughWithLarge = sampleOptimized(particlesLarge * particlesHugh, probDangerPerParticle * collisionByDangerRisk);
         int collHughWithHugh = sampleOptimized((long) particlesHugh * (particlesHugh - 1), probDangerPerParticle * collisionByDangerRisk);
 
@@ -140,7 +140,7 @@ public class SpaceSimulation extends Thread {
         // the observatory tries to resolve plausible collisions. upon failing, there is still only little chance on collision
         collSatWithHugh = sampleOptimized(obs.save(collSatWithHugh), collisionByDangerRisk);
         collSatWithLarge = sampleOptimized(obs.save(collSatWithLarge), collisionByDangerRisk);
-        collSatWithSmall = sampleOptimized(collSatWithSmall, collisionByDangerRisk);
+//        collSatWithSmall = sampleOptimized(collSatWithSmall, collisionByDangerRisk);
 
         // process effects of collisions
         satellitesInOrbit -= collSatWithHugh;
@@ -158,9 +158,9 @@ public class SpaceSimulation extends Thread {
         shredIntoParticles(collSatWithLarge);
         results.addLostSatellites(collSatWithLarge);
 
-        satellitesInOrbit -= collSatWithSmall;
-        particlesHugh += collSatWithSmall;
-        results.addLostSatellites(collSatWithSmall);
+//        satellitesInOrbit -= collSatWithSmall;
+//        particlesHugh += collSatWithSmall;
+//        results.addLostSatellites(collSatWithSmall);
 
         int satBreakdown = sampleOptimized(satellitesInOrbit, satBreakdownProb);
         satellitesInOrbit -= satBreakdown;
@@ -174,8 +174,8 @@ public class SpaceSimulation extends Thread {
         // launching new satellites
         daysUntilNextLaunch = max(0, daysUntilNextLaunch - 1);
         // could have been an if-statement, but this is more stable
-        while (daysUntilNextLaunch < 1 && this.satellitesInOrbit < satellitesRequiredInOrbit) {
-            this.satellitesInOrbit++;
+        while (daysUntilNextLaunch < 1 && satellitesInOrbit < satellitesRequiredInOrbit) {
+            satellitesInOrbit++;
             particlesHugh += launchStages;
             particlesLarge += launchPartDistLarge.nextRandom();
             daysUntilNextLaunch += (1.0 / launchesPerDay);
