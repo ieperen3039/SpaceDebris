@@ -14,7 +14,7 @@ import static Simulation.SpaceSimulation.YEARS;
  */
 public class Main {
     /** number of simulations run */
-    public static final int NOF_RUNS = 500;
+    public static final int NOF_RUNS = 50;
     /** how many parallel threads may run at once */
     private static final int THREAD_POOL = 10;
     private static final int MAX_YEARS = 100;

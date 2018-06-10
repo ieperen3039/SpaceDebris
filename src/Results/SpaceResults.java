@@ -34,8 +34,6 @@ public class SpaceResults {
         activeSatellites[index] = satsInOrbit;
         spaceFlightsQueued[index] = SpaceSimulation.satellitesRequiredInOrbit - satsInOrbit;
         index++;
-
-        lostSatellites[index] = 0;
     }
 
     public void addLostSatellites(int n) {
