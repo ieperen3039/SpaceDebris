@@ -17,10 +17,10 @@ import static Simulation.SpaceSimulation.YEARS;
  */
 public class Main {
     /** number of simulations run */
-    public static final int NOF_RUNS = 100;
+    public static final int NOF_RUNS = 5;
     /** how many parallel threads may run at once */
     private static final int THREAD_POOL = 10;
-    private static final int MAX_YEARS = 100;
+    private static final int MAX_YEARS = 1;
     /** number of days for one simulation */
     public static final int MAX_TIME = MAX_YEARS * YEARS;
 
@@ -60,7 +60,7 @@ public class Main {
         System.out.printf("Mean saves in %d years: %1.03f %s%n", MAX_YEARS, results.savesMean(), results.savesConf());
         System.out.printf("Mean lost satellites in %d years: %1.03f %s%n", MAX_YEARS, results.lostSatellitesMean(), results.lostSatellitesConf());
         System.out.printf("Mean total particles after %d years: %1.03f",
-                MAX_TIME, hughParticles[MAX_TIME] + largeParticles[MAX_TIME] + smallParticles[MAX_TIME]
+                MAX_YEARS, hughParticles[MAX_TIME] + largeParticles[MAX_TIME] + smallParticles[MAX_TIME]
         );
 
         output.println("dayNr;activeSats;launchQueue;hughDebris;largeDebris;smallDebris");

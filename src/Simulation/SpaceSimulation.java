@@ -30,6 +30,9 @@ public class SpaceSimulation extends Thread {
     public static final int YEARS = 365; // in days
     public static final int NOF_TRACKED_OBJECTS = 38_700; // a few values are based on this
 
+    /** number of satellites that we want in the sky */
+    public static final int satellitesRequiredInOrbit = 1200;
+
     /** average period for debris to fall into the atmosphere or outer space in days */
     public static final double fallProbSmall = probSplit(300.0 / NOF_TRACKED_OBJECTS, YEARS);
     public static final double fallProbLarge = fallProbSmall;
@@ -43,14 +46,6 @@ public class SpaceSimulation extends Thread {
     public static final Distribution shreddingDistSmall =
             new ExponentialDistribution(1.0 / (shreddingFactor * shreddingSmallFraction));
 
-    /** max satellite launches per day */
-    public static final double launchesPerDay = 2 * 90.0 / YEARS;
-    /** number of satellites that we want in the sky */
-    public static final int satellitesRequiredInOrbit = 1200;
-    /** number of satellites that an observatory can resolve within 24 hours */
-    public static final double observatorySavesPerDay = 0.25;
-    public static final int observatoryCapacity = 2;
-
     /** number of hugh particles generated upon launching a new satellite */
     public static final int launchStages = 2;
     public static final Distribution launchPartDistLarge = new ExponentialDistribution(1.0 / 50);
@@ -62,6 +57,14 @@ public class SpaceSimulation extends Thread {
     /** breakdown probability per satellite per day. */
     // Even though this would result in an exponential breakdown, this holds when the number of satellites in orbit is constant
     public final static double satBreakdownProb = probSplit(0.1, YEARS);
+
+    /** max satellite launches per day */
+    public static final double launchesPerDay = 2 * 90.0 / YEARS;
+    /** number of satellites that an observatory can resolve within 24 hours */
+    public static final double observatoryCapacity = 0.25;
+    // the ESA has 19 satellites by itself
+    public static final int nOfObservatories = satellitesRequiredInOrbit / 19;
+    public static final double observatorySavesPerDay = nOfObservatories * observatoryCapacity;
 
     /** particles [1 ... 10] cm */
     private long particlesSmall = 750_000;
@@ -89,7 +92,7 @@ public class SpaceSimulation extends Thread {
      * runs a single simulation run
      */
     public void run() {
-        Observatory esa = new Observatory();
+        Observatories esa = new Observatories();
         for (int i = 0; i < maxTime; i++) {
             progressOneDay(esa);
             esa.nextDay();
@@ -123,7 +126,7 @@ public class SpaceSimulation extends Thread {
      * updates and calculates the changes for one day
      * @param obs an observatory capable of saving satellites from collisions
      */
-    private void progressOneDay(Observatory obs) {
+    private void progressOneDay(Observatories obs) {
         // different types of collisions
         int collSatWithHugh = sampleOptimized((long) particlesHugh * satellitesInOrbit, probDangerPerParticle);
         int collSatWithLarge = sampleOptimized(particlesLarge * satellitesInOrbit, probDangerPerParticle);
@@ -137,7 +140,7 @@ public class SpaceSimulation extends Thread {
         // the observatory tries to resolve plausible collisions. upon failing, there is still only little chance on collision
         collSatWithHugh = sampleOptimized(obs.save(collSatWithHugh), collisionByDangerRisk);
         collSatWithLarge = sampleOptimized(obs.save(collSatWithLarge), collisionByDangerRisk);
-        collSatWithSmall = sampleOptimized(obs.save(collSatWithSmall), collisionByDangerRisk);
+        collSatWithSmall = sampleOptimized(collSatWithSmall, collisionByDangerRisk);
 
         // process effects of collisions
         satellitesInOrbit -= collSatWithHugh;
@@ -220,9 +223,9 @@ public class SpaceSimulation extends Thread {
     }
 
     // may save a few collisions
-    class Observatory {
-        private int savesLeft = observatoryCapacity;
-        private double daysUntilRefresh;
+    class Observatories {
+        private int savesLeft = nOfObservatories;
+        private double daysUntilRefresh = 0;
 
         /**
          * try to save the satellites
@@ -245,7 +248,7 @@ public class SpaceSimulation extends Thread {
 
         public void nextDay() {
             daysUntilRefresh = max(0, daysUntilRefresh - 1);
-            while (daysUntilRefresh < 1 && savesLeft < observatoryCapacity) {
+            while (daysUntilRefresh < 1 && savesLeft < nOfObservatories) {
                 savesLeft++;
                 daysUntilRefresh += (1.0 / observatorySavesPerDay);
             }
